@@ -15,9 +15,7 @@ import { Button } from '@/src/components/ui/Button';
 import { Input } from '@/src/components/ui/Input';
 import { colors } from '@/src/styles/tokens';
 
-// Exportar a ilustração do Figma e salvar em assets/images/login-car.png
-// const IMG_CAR = require('@/assets/images/login-car.png');
-const IMG_CAR: null = null;
+const IMG_CAR = require('../assets/images/car-login.png');
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -46,21 +44,11 @@ export default function LoginScreen() {
           <View className="gap-7">
 
             {/* Ilustração */}
-            {IMG_CAR ? (
-              <Image
-                source={IMG_CAR}
-                className="w-full h-[200px]"
-                resizeMode="contain"
-              />
-            ) : (
-              // Placeholder — substituir quando assets/images/login-car.png for adicionado
-              <View className="w-full h-[200px] bg-background rounded-2xl items-center justify-center gap-1">
-                <Text className="text-subtle-light text-2xl">🚗</Text>
-                <Text className="text-muted text-xs text-center">
-                  Adicionar: assets/images/login-car.png
-                </Text>
-              </View>
-            )}
+            <Image
+              source={IMG_CAR}
+              className="w-full h-[200px]"
+              resizeMode="contain"
+            />
 
             {/* Título */}
             <Text className="text-[40px] font-semibold text-normal text-center leading-[48px]">
