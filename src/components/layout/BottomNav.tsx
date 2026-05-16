@@ -12,10 +12,12 @@ interface Tab {
 }
 
 const TABS: Tab[] = [
-  { label: 'Explorar', route: '/explore' as Href, Icon: Search },
-  { label: 'Comparar', route: '/comparison' as Href, Icon: Scale },
-  { label: 'Favoritos', route: '/favorites' as Href, Icon: Heart },
-  { label: 'Perfil', route: '/search' as Href, Icon: User },
+  { label: 'Explorar',  route: '/explore'    as Href, Icon: Search },
+  // TODO: criar rota /comparison
+  { label: 'Comparar',  route: '/comparison' as Href, Icon: Scale  },
+  // TODO: criar rota /favorites
+  { label: 'Favoritos', route: '/favorites'  as Href, Icon: Heart  },
+  { label: 'Entrar',    route: '/login'      as Href, Icon: User   },
 ];
 
 export function BottomNav() {

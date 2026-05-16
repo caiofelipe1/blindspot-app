@@ -29,8 +29,7 @@ export default function RegisterInfoScreen() {
   const [termos,     setTermos]     = useState(false);
 
   function handleConcluir() {
-    // TODO: substituir por /explore quando a tela de exploração principal estiver pronta
-    router.replace('/(tabs)');
+    router.replace('/explore');
   }
 
   return (
