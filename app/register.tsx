@@ -28,8 +28,7 @@ export default function RegisterScreen() {
   const [confirmarSenhaVisivel,setConfirmarSenhaVisivel]= useState(false);
 
   function handleProximo() {
-    // TODO: navegar para /register-info quando a rota existir
-    // router.push('/register-info');
+    router.push('/register-info');
   }
 
   return (
