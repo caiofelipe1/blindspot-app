@@ -16,8 +16,7 @@ export default function ExploreScreen() {
   const router = useRouter();
 
   function handleSearch() {
-    // TODO: navegar para /search quando a rota existir
-    // router.push('/search');
+    router.push('/search');
   }
 
   return (
