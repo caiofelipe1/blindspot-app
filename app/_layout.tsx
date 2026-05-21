@@ -24,6 +24,8 @@ export default function RootLayout() {
         <Stack.Screen name="explore"       options={{ headerShown: false }} />
         <Stack.Screen name="search"        options={{ headerShown: false }} />
         <Stack.Screen name="result"        options={{ headerShown: false }} />
+        <Stack.Screen name="vehicle/[id]"  options={{ headerShown: false }} />
+        <Stack.Screen name="comparison"    options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)"        options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
       </Stack>

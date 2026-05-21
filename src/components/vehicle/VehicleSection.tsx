@@ -49,8 +49,7 @@ export function VehicleSection({ title, vehicles, onSeeAll }: VehicleSectionProp
   const router = useRouter();
 
   function handleCardPress(id: string) {
-    // TODO: navegar para /vehicle/[id] quando a rota existir
-    // router.push(`/vehicle/${id}`);
+    router.push(`/vehicle/${id}` as never);
   }
 
   return (
