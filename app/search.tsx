@@ -207,21 +207,24 @@ function Selector<T>({
                   <Pressable
                     key={getKey(item)}
                     onPress={() => handleSelect(item)}
-                    style={({ pressed }) => ({
-                      opacity: pressed ? 0.6 : 1,
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      paddingHorizontal: 20,
-                      paddingVertical: 14,
-                      backgroundColor: norm(getLabel(item)) === norm(value) ? 'rgba(0,119,200,0.05)' : 'transparent',
-                      borderTopWidth: idx === 0 ? 0 : 1,
-                      borderTopColor: colors.background,
-                    })}
+                    style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
                   >
-                    <Text style={{ flex: 1, fontSize: 15, color: colors.normal }}>{getLabel(item)}</Text>
-                    {norm(getLabel(item)) === norm(value) && (
-                      <Check size={16} color={colors.primary} strokeWidth={2} />
-                    )}
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        paddingHorizontal: 20,
+                        paddingVertical: 14,
+                        backgroundColor: norm(getLabel(item)) === norm(value) ? 'rgba(0,119,200,0.05)' : 'transparent',
+                        borderTopWidth: idx === 0 ? 0 : 1,
+                        borderTopColor: colors.background,
+                      }}
+                    >
+                      <Text style={{ flex: 1, fontSize: 15, color: colors.normal }}>{getLabel(item)}</Text>
+                      {norm(getLabel(item)) === norm(value) && (
+                        <Check size={16} color={colors.primary} strokeWidth={2} />
+                      )}
+                    </View>
                   </Pressable>
                 ))
               ) : (

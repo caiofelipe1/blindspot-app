@@ -2,10 +2,17 @@ import '../global.css';
 
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect, useRef, useState } from 'react';
+import { Animated, Image, View } from 'react-native';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
+
+const LOGO = require('../assets/images/splash-icon.png');
+
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export const unstable_settings = {
   anchor: 'index',
@@ -13,6 +20,22 @@ export const unstable_settings = {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const [splashDone, setSplashDone] = useState(false);
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    SplashScreen.hideAsync().catch(() => {});
+
+    const timer = setTimeout(() => {
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 350,
+        useNativeDriver: true,
+      }).start(() => setSplashDone(true));
+    }, 900);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
@@ -34,6 +57,27 @@ export default function RootLayout() {
         <Stack.Screen name="vehicle/[id]"   options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="auto" />
+
+      {/* Loading overlay com logo — visível até o app estar pronto */}
+      {!splashDone && (
+        <Animated.View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: '#0077C8',
+            alignItems: 'center',
+            justifyContent: 'center',
+            opacity: fadeAnim,
+          }}
+        >
+          <Image
+            source={LOGO}
+            style={{ width: 180, height: 180 }}
+            resizeMode="contain"
+          />
+        </Animated.View>
+      )}
     </ThemeProvider>
   );
 }

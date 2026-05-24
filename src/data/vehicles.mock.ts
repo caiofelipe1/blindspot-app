@@ -1,4 +1,22 @@
-import { ImageSourcePropType } from 'react-native';
+import type { ImageSourcePropType } from 'react-native';
+
+const VI: Record<string, ImageSourcePropType> = {
+  ranger_raptor: require('../../assets/images/vehicles/ranger_raptor.jpg'),
+  hilux:         require('../../assets/images/vehicles/hilux.jpg'),
+  amarok:        require('../../assets/images/vehicles/amarok.jpg'),
+  l200:          require('../../assets/images/vehicles/l200.jpg'),
+  s10:           require('../../assets/images/vehicles/s10.jpg'),
+  corolla:       require('../../assets/images/vehicles/corolla.jpg'),
+  hrv:           require('../../assets/images/vehicles/hrv.jpg'),
+  polo:          require('../../assets/images/vehicles/polo.jpg'),
+  hb20:          require('../../assets/images/vehicles/hb20.jpg'),
+  pulse:         require('../../assets/images/vehicles/pulse.jpg'),
+  dolphin:       require('../../assets/images/vehicles/dolphin.jpg'),
+  ex30:          require('../../assets/images/vehicles/ex30.jpg'),
+  seal:          require('../../assets/images/vehicles/seal.jpg'),
+  ora03:         require('../../assets/images/vehicles/ora03.jpg'),
+  model3:        require('../../assets/images/vehicles/model3.jpg'),
+};
 
 export interface VehicleMock {
   id: string;
@@ -39,41 +57,52 @@ export interface VehicleMock {
   confidenceStatus?: 'verificado' | 'parcial' | 'nao_verificado';
 }
 
-const img = {
-  home:     require('../../assets/images/home-car.png')     as ImageSourcePropType,
-  register: require('../../assets/images/register-car.png') as ImageSourcePropType,
-  login:    require('../../assets/images/car-login.png')    as ImageSourcePropType,
-};
-
 export const popularVehicles: VehicleMock[] = [
   {
-    id: '1', brand: 'Ford', model: 'Ranger Raptor', version: 'Ranger Raptor 2.0 EcoBlue Biturbo',
-    year: 2024, image: img.home, price: 379990, rating: 4.9,
-    fuel: 'Diesel', power: '210 cv', bodyType: 'Picape', transmission: 'Automático 10 vel.',
+    id: '1', brand: 'Ford', model: 'Ranger Raptor', version: 'Ranger Raptor 3.0 V6 Biturbo 4WD',
+    year: 2025, image: VI.ranger_raptor, price: 499990, rating: 4.9,
+    fuel: 'Gasolina', power: '397 cv', bodyType: 'Picape', transmission: 'Automático 10 vel. (E-Shifter)',
     category: 'popular', isFavorite: false, isElectric: false, isFeatured: true,
-    torque: '500 Nm', engineType: '2.0 EcoBlue Biturbo Diesel', traction: '4WD com 6 modos de direção',
-    dimensions: { comprimento: 5362, largura: 1860, altura: 1912, entre_eixos: 3270, portaMalas: 1560 },
-    weight: 2340,
-    urbanConsumption: '9,5 km/l', highwayConsumption: '12,0 km/l',
-    acceleration: '10,0 s', topSpeed: '180 km/h',
+    torque: '583 Nm', engineType: '3.0L V6 Bi-turbo', traction: '4WD com 7 modos de condução',
+    dimensions: { comprimento: 5381, largura: 2208, altura: 1922, entre_eixos: 3270, portaMalas: 1560 },
+    weight: 2415,
+    urbanConsumption: '8,5 km/l', highwayConsumption: '11,5 km/l',
+    acceleration: '5,5 s', topSpeed: '180 km/h',
     safetyFeatures: [
-      '7 airbags', 'ABS + EBD', 'Controle de estabilidade (AdvanceTrac)',
-      'Pre-Collision Assist com frenagem automática', 'Lane Keeping Alert',
-      'Câmera de ré', 'Sensores de estacionamento', 'Cruise Control adaptativo',
+      '7 airbags (frontais, laterais, cortinas e joelho)',
+      'Controle eletrônico de estabilidade',
+      'Assistente autônomo de frenagem (com detecção de pedestres)',
+      'Assistente autônomo de frenagem em marcha à ré',
+      'Piloto automático adaptativo (ACC) com Stop & Go',
+      'Piloto automático off-road (Trail Control)',
+      'Sistema de monitoramento de ponto cego (BLIS)',
+      'Alerta de tráfego cruzado em marcha à ré',
+      'Câmera 360°',
+      'Sensor de estacionamento dianteiro e traseiro',
+      'Assistente de manobras evasivas',
+      'Assistente de permanência e centralização em faixa',
+      'Frenagem pós-colisão',
+      'Farol alto automático',
     ],
     otherAttributes: [
       { label: 'Carroceria', value: 'Picape dupla cabine' },
       { label: 'Assentos', value: '5' },
-      { label: 'Capacidade de carga', value: '620 kg' },
-      { label: 'Modos de direção', value: 'Normal, Sport, Lama/Areia, Rocha, Baja, Neve' },
-      { label: 'Garantia', value: '3 anos' },
+      { label: 'Capacidade de carga', value: '715 kg' },
+      { label: 'Tanque', value: '77 L' },
+      { label: 'Capacidade de imersão', value: '850 mm' },
+      { label: 'Suspensão', value: 'FOX 2.5" Live Valve Racing' },
+      { label: 'Diferencial', value: 'Dianteiro e traseiro blocante' },
+      { label: 'Modos de condução', value: 'Normal, Esportivo, Escorregadio, Lama/Terra, Areia, Baja, Rock Crawl' },
+      { label: 'Modos de amortecedor', value: 'Normal, Sport, Off-Road' },
+      { label: 'Som', value: 'Bang & Olufsen (8 alto-falantes)' },
+      { label: 'Garantia', value: '5 anos sem limite de km' },
     ],
-    dataSources: ['Ford Brasil', 'Ficha técnica oficial Ford 2024', 'Inmetro'],
+    dataSources: ['Ford Brasil', 'Ficha técnica oficial Ford MY2025 (02/2025)', 'ford.com.br/picapes/ranger-raptor'],
     confidenceStatus: 'verificado',
   },
   {
     id: '2', brand: 'Toyota', model: 'Hilux', version: 'GR Sport 2.8 TDI 4x4 AT',
-    year: 2024, image: img.register, price: 299990, rating: 4.8,
+    year: 2024, image: VI.hilux, price: 299990, rating: 4.8,
     fuel: 'Diesel', power: '204 cv', bodyType: 'Picape', transmission: 'Automático 6 vel.',
     category: 'popular', isFavorite: false, isElectric: false, isFeatured: true,
     torque: '500 Nm', engineType: '2.8 GD-6 Diesel', traction: '4WD com bloqueio de diferencial',
@@ -97,7 +126,7 @@ export const popularVehicles: VehicleMock[] = [
   },
   {
     id: '3', brand: 'Volkswagen', model: 'Amarok', version: 'Highline V6 3.0 TDI 4Motion',
-    year: 2024, image: img.login, price: 399990, rating: 4.7,
+    year: 2024, image: VI.amarok, price: 399990, rating: 4.7,
     fuel: 'Diesel', power: '258 cv', bodyType: 'Picape', transmission: 'Automático 8 vel.',
     category: 'popular', isFavorite: false, isElectric: false,
     torque: '580 Nm', engineType: '3.0 TDI V6 Biturbo', traction: '4Motion (4WD permanente)',
@@ -121,7 +150,7 @@ export const popularVehicles: VehicleMock[] = [
   },
   {
     id: '4', brand: 'Mitsubishi', model: 'L200 Triton', version: 'Sport HPE-S 2.4 Diesel AT',
-    year: 2024, image: img.home, price: 249990, rating: 4.5,
+    year: 2024, image: VI.l200, price: 249990, rating: 4.5,
     fuel: 'Diesel', power: '181 cv', bodyType: 'Picape', transmission: 'Automático 6 vel.',
     category: 'popular', isFavorite: false, isElectric: false,
     torque: '430 Nm', engineType: '2.4 MIVEC Diesel Turbo', traction: '4WD Eletrônico Super Select II',
@@ -144,7 +173,7 @@ export const popularVehicles: VehicleMock[] = [
   },
   {
     id: '5', brand: 'Chevrolet', model: 'S10', version: 'High Country 2.8 Diesel AT 4x4',
-    year: 2024, image: img.register, price: 289990, rating: 4.6,
+    year: 2024, image: VI.s10, price: 289990, rating: 4.6,
     fuel: 'Diesel', power: '200 cv', bodyType: 'Picape', transmission: 'Automático 6 vel.',
     category: 'popular', isFavorite: false, isElectric: false,
     torque: '500 Nm', engineType: '2.8 Turbo Diesel Duramax', traction: '4WD com bloqueio de diferencial',
@@ -170,7 +199,7 @@ export const popularVehicles: VehicleMock[] = [
 export const favoriteVehicles: VehicleMock[] = [
   {
     id: '6', brand: 'Toyota', model: 'Corolla', version: 'XEi 2.0 Flex',
-    year: 2024, image: img.login, price: 149990, rating: 4.7,
+    year: 2024, image: VI.corolla, price: 149990, rating: 4.7,
     fuel: 'Flex (gasolina/etanol)', power: '177 cv', bodyType: 'Sedan', transmission: 'Automático',
     category: 'favorite', isFavorite: true, isElectric: false,
     torque: '213 Nm', engineType: '2.0 Flex Dynamic Force', traction: 'Dianteira (FWD)',
@@ -185,7 +214,7 @@ export const favoriteVehicles: VehicleMock[] = [
   },
   {
     id: '7', brand: 'Honda', model: 'HR-V', version: 'Touring Hybrid',
-    year: 2024, image: img.home, price: 179990, rating: 4.6,
+    year: 2024, image: VI.hrv, price: 179990, rating: 4.6,
     fuel: 'Híbrido (flex + elétrico)', power: '131 cv', bodyType: 'SUV', transmission: 'CVT',
     category: 'favorite', isFavorite: true, isElectric: false,
     torque: '253 Nm', engineType: '1.5 Flex + Motor elétrico', traction: 'Dianteira (FWD)',
@@ -200,7 +229,7 @@ export const favoriteVehicles: VehicleMock[] = [
   },
   {
     id: '8', brand: 'Volkswagen', model: 'Polo', version: 'GTS 1.4 TSI',
-    year: 2024, image: img.register, price: 109990, rating: 4.5,
+    year: 2024, image: VI.polo, price: 109990, rating: 4.5,
     fuel: 'Gasolina', power: '128 cv', bodyType: 'Hatch', transmission: 'Automático',
     category: 'favorite', isFavorite: true, isElectric: false,
     torque: '200 Nm', engineType: '1.4 TSI', traction: 'Dianteira (FWD)',
@@ -215,7 +244,7 @@ export const favoriteVehicles: VehicleMock[] = [
   },
   {
     id: '9', brand: 'Hyundai', model: 'HB20S', version: 'Diamond 1.0 T',
-    year: 2024, image: img.login, price: 89990, rating: 4.4,
+    year: 2024, image: VI.hb20, price: 89990, rating: 4.4,
     fuel: 'Flex (gasolina/etanol)', power: '120 cv', bodyType: 'Sedan', transmission: 'Automático',
     category: 'favorite', isFavorite: true, isElectric: false,
     torque: '172 Nm', engineType: '1.0 Turbo GDI Flex', traction: 'Dianteira (FWD)',
@@ -230,7 +259,7 @@ export const favoriteVehicles: VehicleMock[] = [
   },
   {
     id: '10', brand: 'Fiat', model: 'Pulse', version: 'Impetus T200 CVT',
-    year: 2024, image: img.home, price: 119990, rating: 4.3,
+    year: 2024, image: VI.pulse, price: 119990, rating: 4.3,
     fuel: 'Flex (gasolina/etanol)', power: '130 cv', bodyType: 'SUV', transmission: 'CVT',
     category: 'favorite', isFavorite: true, isElectric: false,
     torque: '200 Nm', engineType: '1.3 Turbo 200 Flex', traction: 'Dianteira (FWD)',
@@ -248,7 +277,7 @@ export const favoriteVehicles: VehicleMock[] = [
 export const electricVehicles: VehicleMock[] = [
   {
     id: '11', brand: 'BYD', model: 'Dolphin', version: 'Plus 60 kWh',
-    year: 2024, image: img.register, price: 149990, rating: 4.8,
+    year: 2024, image: VI.dolphin, price: 149990, rating: 4.8,
     fuel: 'Elétrico', power: '204 cv', bodyType: 'Hatch', transmission: 'Automático',
     category: 'electric', isFavorite: false, isElectric: true,
     torque: '310 Nm', engineType: 'Motor elétrico (MEB)', traction: 'Dianteira (FWD)',
@@ -263,7 +292,7 @@ export const electricVehicles: VehicleMock[] = [
   },
   {
     id: '12', brand: 'Volvo', model: 'EX30', version: 'Single Motor',
-    year: 2024, image: img.home, price: 249990, rating: 4.9,
+    year: 2024, image: VI.ex30, price: 249990, rating: 4.9,
     fuel: 'Elétrico', power: '272 cv', bodyType: 'SUV', transmission: 'Automático',
     category: 'electric', isFavorite: false, isElectric: true, isFeatured: true,
     torque: '343 Nm', engineType: 'Motor elétrico (PMSM)', traction: 'Traseira (RWD)',
@@ -278,7 +307,7 @@ export const electricVehicles: VehicleMock[] = [
   },
   {
     id: '13', brand: 'BYD', model: 'Seal', version: 'AWD 82 kWh',
-    year: 2024, image: img.login, price: 219990, rating: 4.7,
+    year: 2024, image: VI.seal, price: 219990, rating: 4.7,
     fuel: 'Elétrico', power: '313 cv', bodyType: 'Sedan', transmission: 'Automático',
     category: 'electric', isFavorite: false, isElectric: true,
     torque: '670 Nm', engineType: 'Dual Motor elétrico', traction: 'Integral (AWD)',
@@ -293,7 +322,7 @@ export const electricVehicles: VehicleMock[] = [
   },
   {
     id: '14', brand: 'GWM', model: 'ORA 03', version: 'Premium 63 kWh',
-    year: 2024, image: img.register, price: 179990, rating: 4.5,
+    year: 2024, image: VI.ora03, price: 179990, rating: 4.5,
     fuel: 'Elétrico', power: '204 cv', bodyType: 'Sedan', transmission: 'Automático',
     category: 'electric', isFavorite: false, isElectric: true,
     torque: '310 Nm', engineType: 'Motor elétrico', traction: 'Dianteira (FWD)',
@@ -308,7 +337,7 @@ export const electricVehicles: VehicleMock[] = [
   },
   {
     id: '15', brand: 'Tesla', model: 'Model 3', version: 'Long Range AWD',
-    year: 2024, image: img.home, price: 299990, rating: 4.9,
+    year: 2024, image: VI.model3, price: 299990, rating: 4.9,
     fuel: 'Elétrico', power: '286 cv', bodyType: 'Sedan', transmission: 'Automático',
     category: 'electric', isFavorite: false, isElectric: true, isFeatured: true,
     torque: '493 Nm', engineType: 'Dual Motor elétrico', traction: 'Integral (AWD)',

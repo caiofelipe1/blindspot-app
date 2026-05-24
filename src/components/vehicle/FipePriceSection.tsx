@@ -87,25 +87,26 @@ export function FipePriceSection({ brand, model, year }: Props) {
     return (
       <Pressable
         onPress={consult}
-        style={({ pressed }) => ({
-          opacity: pressed ? 0.7 : 1,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 8,
-          marginHorizontal: 24,
-          marginBottom: 20,
-          paddingVertical: 14,
-          borderRadius: 14,
-          borderWidth: 1.5,
-          borderColor: colors.primary,
-          backgroundColor: 'rgba(0,119,200,0.05)',
-        })}
+        style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1, marginHorizontal: 24, marginBottom: 20 })}
       >
-        <TrendingUp size={18} color={colors.primary} strokeWidth={1.5} />
-        <Text style={{ fontSize: 15, fontWeight: '600', color: colors.primary }}>
-          Consultar preço FIPE
-        </Text>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            paddingVertical: 14,
+            borderRadius: 14,
+            borderWidth: 1.5,
+            borderColor: colors.primary,
+            backgroundColor: 'rgba(0,119,200,0.05)',
+          }}
+        >
+          <TrendingUp size={18} color={colors.primary} strokeWidth={1.5} />
+          <Text style={{ fontSize: 15, fontWeight: '600', color: colors.primary }}>
+            Consultar preço FIPE
+          </Text>
+        </View>
       </Pressable>
     );
   }
