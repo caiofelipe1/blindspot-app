@@ -17,6 +17,7 @@ const VI: Record<string, ImageSourcePropType> = {
   ora03:         require('../../assets/images/vehicles/ora03.jpg'),
   model3:        require('../../assets/images/vehicles/model3.jpg'),
   duster:        require('../../assets/images/vehicles/duster.jpg'),
+  compass:       require('../../assets/images/vehicles/compass.jpg'),
 };
 
 export interface VehicleMock {
@@ -193,6 +194,30 @@ export const popularVehicles: VehicleMock[] = [
       { label: 'Garantia', value: '3 anos' },
     ],
     dataSources: ['Renault Brasil', 'Fabricante', 'Inmetro'],
+    confidenceStatus: 'verificado',
+  },
+  {
+    id: '17', brand: 'Jeep', model: 'Compass', version: 'Longitude 1.3 T270 Flex AT6',
+    year: 2024, image: VI.compass, price: 189990, rating: 4.5,
+    fuel: 'Flex (gasolina/etanol)', power: '185 cv', bodyType: 'SUV', transmission: 'Automático 6 vel.',
+    category: 'popular', isFavorite: false, isElectric: false,
+    torque: '270 Nm', engineType: '1.3 Turbo Flex T270', traction: 'Dianteira (FWD)',
+    dimensions: { comprimento: 4405, largura: 1820, altura: 1640, entre_eixos: 2636, portaMalas: 516 },
+    weight: 1520,
+    urbanConsumption: '10,8 km/l', highwayConsumption: '13,2 km/l',
+    acceleration: '9,1 s', topSpeed: '190 km/h',
+    safetyFeatures: [
+      '6 airbags', 'ABS + EBD', 'Controle de estabilidade (ESC)',
+      'Câmera de ré 180°', 'Sensores dianteiros e traseiros',
+      'Alerta de saída de faixa', 'Monitoramento de ponto cego',
+    ],
+    otherAttributes: [
+      { label: 'Carroceria', value: 'SUV compacto' },
+      { label: 'Assentos', value: '5' },
+      { label: 'Tanque', value: '54 L' },
+      { label: 'Garantia', value: '3 anos' },
+    ],
+    dataSources: ['Jeep Brasil', 'Fabricante', 'Inmetro'],
     confidenceStatus: 'verificado',
   },
   {

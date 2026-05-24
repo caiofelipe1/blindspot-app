@@ -54,7 +54,8 @@ export default function RootLayout() {
         <Stack.Screen name="register-info"  options={{ headerShown: false }} />
         <Stack.Screen name="reset-password" options={{ headerShown: false }} />
         <Stack.Screen name="search"         options={{ headerShown: false }} />
-        <Stack.Screen name="result"         options={{ headerShown: false }} />
+        <Stack.Screen name="result"           options={{ headerShown: false }} />
+        <Stack.Screen name="recently-viewed" options={{ headerShown: false }} />
         <Stack.Screen name="vehicle/[id]"   options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="auto" />

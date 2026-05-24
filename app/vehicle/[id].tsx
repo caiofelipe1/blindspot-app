@@ -1,4 +1,5 @@
 import { ScrollView, View, Text, Image, Pressable } from 'react-native';
+import { useEffect } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import {
@@ -17,6 +18,7 @@ import { SpecRow } from '@/src/components/vehicle/SpecRow';
 import { FipePriceSection } from '@/src/components/vehicle/FipePriceSection';
 import { useFavoritesStore } from '@/src/stores/favoritesStore';
 import { useComparisonStore } from '@/src/stores/comparisonStore';
+import { useRecentlyViewedStore } from '@/src/stores/recentlyViewedStore';
 import { ALL_VEHICLES } from '@/src/data/vehicles.mock';
 
 function formatPrice(value: number): string {
@@ -53,6 +55,11 @@ export default function VehicleDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { favoriteIds, toggleFavorite } = useFavoritesStore();
   const { addVehicle, removeVehicle, selectedIds } = useComparisonStore();
+  const { addRecentlyViewed } = useRecentlyViewedStore();
+
+  useEffect(() => {
+    if (id) addRecentlyViewed(id);
+  }, [id]);
   const favorited = favoriteIds.includes(id ?? '');
   const inComparison = selectedIds.includes(id ?? '');
   const comparisonFull = selectedIds.length >= 3 && !inComparison;

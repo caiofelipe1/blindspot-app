@@ -7,6 +7,7 @@ import * as Haptics from 'expo-haptics';
 
 import { BottomNav } from '@/src/components/layout/BottomNav';
 import { useFavoritesStore } from '@/src/stores/favoritesStore';
+import { useRecentlyViewedStore } from '@/src/stores/recentlyViewedStore';
 import { ALL_VEHICLES } from '@/src/data/vehicles.mock';
 import { colors } from '@/src/styles/tokens';
 import type { VehicleMock } from '@/src/data/vehicles.mock';
@@ -87,9 +88,10 @@ function FavoriteCard({ vehicle, cardWidth, isEditing, onPress, onRemove }: Favo
 
 function RecentCard({ cardWidth }: { cardWidth: number }) {
   const router = useRouter();
+  const { recentIds } = useRecentlyViewedStore();
   return (
     <Pressable
-      onPress={() => router.push('/explore')}
+      onPress={() => router.push('/recently-viewed' as never)}
       style={{ width: cardWidth, gap: 8 }}
     >
       <View
@@ -107,13 +109,33 @@ function RecentCard({ cardWidth }: { cardWidth: number }) {
         }}
       >
         <Clock size={40} color={colors.subtleLight} strokeWidth={1.5} />
+        {recentIds.length > 0 && (
+          <View
+            style={{
+              position: 'absolute',
+              top: 12,
+              right: 12,
+              backgroundColor: colors.primary,
+              borderRadius: 999,
+              minWidth: 22,
+              height: 22,
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingHorizontal: 6,
+            }}
+          >
+            <Text style={{ fontSize: 11, fontWeight: '700', color: '#FFFFFF' }}>
+              {recentIds.length}
+            </Text>
+          </View>
+        )}
       </View>
       <View style={{ gap: 2 }}>
         <Text style={{ fontSize: 14, fontWeight: '500', color: colors.normal, letterSpacing: 0.4 }}>
           Vistos recentemente
         </Text>
         <Text style={{ fontSize: 14, fontWeight: '500', color: colors.subtleDark, letterSpacing: 0.4 }}>
-          Hoje
+          {recentIds.length > 0 ? `${recentIds.length} veículo${recentIds.length > 1 ? 's' : ''}` : 'Nenhum ainda'}
         </Text>
       </View>
     </Pressable>

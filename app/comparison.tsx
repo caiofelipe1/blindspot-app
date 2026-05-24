@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { ScrollView, View, Text, Image, Pressable } from 'react-native';
+import { ScrollView, View, Text, Image, Pressable, Share } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
@@ -388,6 +388,12 @@ export default function ComparisonScreen() {
 
         <Pressable
           hitSlop={8}
+          onPress={() =>
+            Share.share({
+              title: `Comparação: ${leftV.brand} ${leftV.model} vs ${rightV.brand} ${rightV.model}`,
+              message: `Comparei no BlindSpot:\n\n🚗 ${leftV.brand} ${leftV.model} ${leftV.year} — R$ ${leftV.price.toLocaleString('pt-BR')}\n🚗 ${rightV.brand} ${rightV.model} ${rightV.year} — R$ ${rightV.price.toLocaleString('pt-BR')}\n\nVencedor: ${leftWins > rightWins ? leftV.model : rightWins > leftWins ? rightV.model : 'Empate'} (${Math.max(leftWins, rightWins)} specs ganhas)`,
+            })
+          }
           style={{
             width: 40,
             height: 40,
