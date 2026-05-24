@@ -1,8 +1,17 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface AuthUser {
   id: string;
   email: string;
+  name: string;
+}
+
+interface Credential {
+  id: string;
+  email: string;
+  password: string;
   name: string;
 }
 
@@ -15,6 +24,7 @@ interface PendingRegistration {
 interface AuthState {
   user: AuthUser | null;
   isLoggedIn: boolean;
+  credentials: Credential[];
   pendingRegistration: PendingRegistration | null;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
@@ -22,59 +32,73 @@ interface AuthState {
   completeRegistration: () => { success: boolean; error?: string };
 }
 
-// Lista mutável para que novos cadastros sejam persistidos durante a sessão
-const mockCredentials: { id: string; email: string; password: string; name: string }[] = [
+const DEFAULT_CREDENTIALS: Credential[] = [
   { id: '1', email: 'test@ford.com', password: '123456', name: 'Usuário Ford' },
 ];
 
-export const useAuthStore = create<AuthState>((set, get) => ({
-  user: null,
-  isLoggedIn: false,
-  pendingRegistration: null,
-
-  login: async (email, password) => {
-    await new Promise<void>(r => setTimeout(r, 800));
-
-    const found = mockCredentials.find(
-      u =>
-        u.email.toLowerCase() === email.trim().toLowerCase() &&
-        u.password === password,
-    );
-
-    if (found) {
-      set({ user: { id: found.id, email: found.email, name: found.name }, isLoggedIn: true });
-      return { success: true };
-    }
-
-    return { success: false, error: 'Email ou senha incorretos.' };
-  },
-
-  logout: () => set({ user: null, isLoggedIn: false }),
-
-  setPendingRegistration: (data) => set({ pendingRegistration: data }),
-
-  completeRegistration: () => {
-    const pending = get().pendingRegistration;
-    if (!pending) return { success: false, error: 'Dados de cadastro não encontrados.' };
-
-    const exists = mockCredentials.find(
-      u => u.email.toLowerCase() === pending.email.trim().toLowerCase(),
-    );
-    if (exists) return { success: false, error: 'Este e-mail já está cadastrado.' };
-
-    const newUser = {
-      id: String(Date.now()),
-      email: pending.email.trim(),
-      password: pending.password,
-      name: pending.name.trim(),
-    };
-    mockCredentials.push(newUser);
-
-    set({
-      user: { id: newUser.id, email: newUser.email, name: newUser.name },
-      isLoggedIn: true,
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set, get) => ({
+      user: null,
+      isLoggedIn: false,
+      credentials: DEFAULT_CREDENTIALS,
       pendingRegistration: null,
-    });
-    return { success: true };
-  },
-}));
+
+      login: async (email, password) => {
+        await new Promise<void>(r => setTimeout(r, 800));
+
+        const found = get().credentials.find(
+          u =>
+            u.email.toLowerCase() === email.trim().toLowerCase() &&
+            u.password === password,
+        );
+
+        if (found) {
+          set({ user: { id: found.id, email: found.email, name: found.name }, isLoggedIn: true });
+          return { success: true };
+        }
+
+        return { success: false, error: 'Email ou senha incorretos.' };
+      },
+
+      logout: () => set({ user: null, isLoggedIn: false }),
+
+      setPendingRegistration: (data) => set({ pendingRegistration: data }),
+
+      completeRegistration: () => {
+        const { pendingRegistration, credentials } = get();
+        if (!pendingRegistration) return { success: false, error: 'Dados de cadastro não encontrados.' };
+
+        const exists = credentials.find(
+          u => u.email.toLowerCase() === pendingRegistration.email.trim().toLowerCase(),
+        );
+        if (exists) return { success: false, error: 'Este e-mail já está cadastrado.' };
+
+        const newUser: Credential = {
+          id: String(Date.now()),
+          email: pendingRegistration.email.trim(),
+          password: pendingRegistration.password,
+          name: pendingRegistration.name.trim(),
+        };
+
+        set((s) => ({
+          credentials: [...s.credentials, newUser],
+          user: { id: newUser.id, email: newUser.email, name: newUser.name },
+          isLoggedIn: true,
+          pendingRegistration: null,
+        }));
+
+        return { success: true };
+      },
+    }),
+    {
+      name: 'auth-store',
+      storage: createJSONStorage(() => AsyncStorage),
+      partialize: (s) => ({
+        user: s.user,
+        isLoggedIn: s.isLoggedIn,
+        credentials: s.credentials,
+      }),
+    },
+  ),
+);
