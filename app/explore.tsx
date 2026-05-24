@@ -14,94 +14,6 @@ import {
   electricVehicles,
 } from '@/src/data/vehicles.mock';
 
-function ReferenceVehicleBanner({ onPress }: { onPress: () => void }) {
-  return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1, marginHorizontal: 24, marginBottom: 16 })}
-    >
-      <View
-        style={{
-          borderRadius: 16,
-          overflow: 'hidden',
-          borderWidth: 1,
-          borderColor: 'rgba(0,119,200,0.2)',
-        }}
-      >
-        {/* Faixa azul superior */}
-        <View
-          style={{
-            backgroundColor: colors.primary,
-            paddingHorizontal: 16,
-            paddingVertical: 7,
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 6,
-          }}
-        >
-          <View
-            style={{
-              width: 6,
-              height: 6,
-              borderRadius: 3,
-              backgroundColor: 'rgba(255,255,255,0.7)',
-            }}
-          />
-          <Text
-            style={{
-              fontSize: 10,
-              fontWeight: '700',
-              color: '#FFFFFF',
-              letterSpacing: 1,
-              textTransform: 'uppercase',
-            }}
-          >
-            Veículo de referência · Ford FIAP 2026
-          </Text>
-        </View>
-
-        {/* Corpo do card */}
-        <View
-          style={{
-            backgroundColor: '#EBF4FC',
-            paddingHorizontal: 16,
-            paddingVertical: 14,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          <View style={{ gap: 3 }}>
-            <Text style={{ fontSize: 18, fontWeight: '700', color: colors.normal, letterSpacing: 0.2 }}>
-              Ford Ranger Raptor
-            </Text>
-            <Text style={{ fontSize: 12, color: colors.subtleDark }}>
-              3.0 V6 Biturbo · 2025 · 397 cv
-            </Text>
-          </View>
-
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 4,
-              backgroundColor: colors.primary,
-              borderRadius: 10,
-              paddingHorizontal: 12,
-              paddingVertical: 8,
-            }}
-          >
-            <Text style={{ fontSize: 13, fontWeight: '600', color: '#FFFFFF' }}>
-              Ver ficha
-            </Text>
-            <Text style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)' }}>→</Text>
-          </View>
-        </View>
-      </View>
-    </Pressable>
-  );
-}
-
 const POPULAR_BRANDS = [
   'Toyota', 'Honda', 'Volkswagen', 'Fiat', 'Chevrolet',
   'Ford', 'Hyundai', 'Renault', 'Jeep', 'BMW',
@@ -151,9 +63,6 @@ export default function ExploreScreen() {
           </Text>
         </Pressable>
       </View>
-
-      {/* Banner veículo de referência */}
-      <ReferenceVehicleBanner onPress={() => router.push('/vehicle/1' as never)} />
 
       {/* Marcas FIPE */}
       <View style={{ marginBottom: 8 }}>
