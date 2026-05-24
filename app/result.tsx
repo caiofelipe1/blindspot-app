@@ -15,16 +15,23 @@ const ALL_VEHICLES: VehicleMock[] = [
   ...electricVehicles,
 ];
 
+function matches(a: string, b: string): boolean {
+  // bidirectional: "Ranger" matches "Ranger 2.2 XLS 4WD CD Diesel" and vice-versa
+  const la = a.toLowerCase();
+  const lb = b.toLowerCase();
+  return la.includes(lb) || lb.includes(la);
+}
+
 function filterVehicles(
   vehicles: VehicleMock[],
   params: { marca?: string; modelo?: string; ano?: string; versao?: string },
 ): VehicleMock[] {
   return vehicles.filter(v => {
     const { marca, modelo, ano, versao } = params;
-    if (marca?.trim() && !v.brand.toLowerCase().includes(marca.trim().toLowerCase())) return false;
-    if (modelo?.trim() && !v.model.toLowerCase().includes(modelo.trim().toLowerCase())) return false;
+    if (marca?.trim() && !matches(v.brand, marca.trim())) return false;
+    if (modelo?.trim() && !matches(v.model, modelo.trim())) return false;
     if (ano?.trim() && String(v.year) !== ano.trim()) return false;
-    if (versao?.trim() && !v.version.toLowerCase().includes(versao.trim().toLowerCase())) return false;
+    if (versao?.trim() && !matches(v.version, versao.trim())) return false;
     return true;
   });
 }

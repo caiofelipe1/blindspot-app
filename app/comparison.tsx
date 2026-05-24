@@ -28,7 +28,7 @@ type WinDir = 'higher' | 'lower' | 'none';
 type WinResult = 'left' | 'right' | 'tie' | 'none';
 
 function parseNum(str: string | undefined): number | null {
-  if (!str || str === '–') return null;
+  if (!str || str === 'Não disponível') return null;
   const clean = str.replace(',', '.');
   const m = clean.match(/[\d.]+/);
   if (!m) return null;
@@ -74,8 +74,8 @@ function buildSections(lv: VehicleMock, rv: VehicleMock): Section[] {
     dir: WinDir,
     getNum?: (v: VehicleMock) => number | undefined,
   ): SpecRow {
-    const lVal = getDisp(lv) ?? '–';
-    const rVal = getDisp(rv) ?? '–';
+    const lVal = getDisp(lv) ?? 'Não disponível';
+    const rVal = getDisp(rv) ?? 'Não disponível';
     return {
       label,
       leftVal: lVal,

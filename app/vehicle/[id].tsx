@@ -1,10 +1,9 @@
-import { useState } from 'react';
 import { ScrollView, View, Text, Image, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import {
   ArrowLeft, Heart, Zap, Fuel, Settings2,
-  Ruler, Shield, Tag, Info, CheckCircle2, Car,
+  Ruler, Shield, Tag, Info, CheckCircle2, Car, Scale,
 } from 'lucide-react-native';
 import type { ReactNode } from 'react';
 
@@ -12,6 +11,9 @@ import { colors } from '@/src/styles/tokens';
 import { StatusBadge } from '@/src/components/ui/StatusBadge';
 import { CollapsibleSection } from '@/src/components/vehicle/CollapsibleSection';
 import { SpecRow } from '@/src/components/vehicle/SpecRow';
+import { FipePriceSection } from '@/src/components/vehicle/FipePriceSection';
+import { useFavoritesStore } from '@/src/stores/favoritesStore';
+import { useComparisonStore } from '@/src/stores/comparisonStore';
 import { ALL_VEHICLES } from '@/src/data/vehicles.mock';
 
 function formatPrice(value: number): string {
@@ -46,7 +48,11 @@ function SummaryPill({ icon, label }: { icon: ReactNode; label: string }) {
 export default function VehicleDetailsScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [favorited, setFavorited] = useState(false);
+  const { favoriteIds, toggleFavorite } = useFavoritesStore();
+  const { addVehicle, removeVehicle, selectedIds } = useComparisonStore();
+  const favorited = favoriteIds.includes(id ?? '');
+  const inComparison = selectedIds.includes(id ?? '');
+  const comparisonFull = selectedIds.length >= 3 && !inComparison;
 
   const vehicle = ALL_VEHICLES.find(v => v.id === id);
 
@@ -118,23 +124,50 @@ export default function VehicleDetailsScreen() {
         </Text>
 
         <Pressable
-          onPress={() => setFavorited(f => !f)}
+          onPress={() => inComparison ? removeVehicle(id ?? '') : (!comparisonFull && addVehicle(id ?? ''))}
           hitSlop={8}
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 12,
-            backgroundColor: colors.background,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
+          style={({ pressed }) => ({ opacity: pressed ? 0.6 : comparisonFull ? 0.35 : 1 })}
         >
-          <Heart
-            size={20}
-            color={favorited ? '#E53E3E' : colors.subtleDark}
-            fill={favorited ? '#E53E3E' : 'transparent'}
-            strokeWidth={1.5}
-          />
+          <View
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 12,
+              backgroundColor: inComparison ? 'rgba(0,119,200,0.12)' : colors.background,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Scale
+              size={20}
+              color={inComparison ? colors.primary : colors.subtleDark}
+              strokeWidth={1.5}
+            />
+          </View>
+        </Pressable>
+
+        <Pressable
+          onPress={() => toggleFavorite(id ?? '')}
+          hitSlop={8}
+          style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
+        >
+          <View
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 12,
+              backgroundColor: favorited ? 'rgba(229,62,62,0.1)' : colors.background,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Heart
+              size={20}
+              color={favorited ? '#E53E3E' : colors.subtleDark}
+              fill={favorited ? '#E53E3E' : 'transparent'}
+              strokeWidth={1.5}
+            />
+          </View>
         </Pressable>
       </View>
 
@@ -214,6 +247,9 @@ export default function VehicleDetailsScreen() {
           </Text>
         </View>
 
+        {/* ── Preço FIPE ── */}
+        <FipePriceSection brand={vehicle.brand} model={vehicle.model} year={vehicle.year} />
+
         {/* ── Summary Pills (scroll horizontal) ── */}
         <ScrollView
           horizontal
@@ -239,6 +275,38 @@ export default function VehicleDetailsScreen() {
             />
           )}
         </ScrollView>
+
+        {/* ── Banner comparação ── */}
+        {selectedIds.length >= 2 && (
+          <Pressable
+            onPress={() => router.push('/comparison')}
+            style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}
+          >
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginHorizontal: 24,
+                marginBottom: 16,
+                paddingHorizontal: 16,
+                paddingVertical: 12,
+                borderRadius: 12,
+                backgroundColor: colors.primary,
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Scale size={16} color="#FFFFFF" strokeWidth={1.5} />
+                <Text style={{ fontSize: 14, fontWeight: '600', color: '#FFFFFF' }}>
+                  {selectedIds.length} veículos na comparação
+                </Text>
+              </View>
+              <Text style={{ fontSize: 13, fontWeight: '500', color: 'rgba(255,255,255,0.85)' }}>
+                Ver →
+              </Text>
+            </View>
+          </Pressable>
+        )}
 
         {/* ── Divider ── */}
         <View
@@ -268,7 +336,7 @@ export default function VehicleDetailsScreen() {
             <SpecRow label="Câmbio" value={vehicle.transmission} />
             <SpecRow
               label="Tração"
-              value={vehicle.traction ?? '–'}
+              value={vehicle.traction ?? 'Não disponível'}
               isLast
             />
           </CollapsibleSection>
@@ -290,7 +358,7 @@ export default function VehicleDetailsScreen() {
               )}
               <SpecRow
                 label="Vel. máxima"
-                value={vehicle.topSpeed ?? '–'}
+                value={vehicle.topSpeed ?? 'Não disponível'}
                 isLast
               />
             </CollapsibleSection>
@@ -324,7 +392,7 @@ export default function VehicleDetailsScreen() {
               />
               <SpecRow
                 label="Peso"
-                value={vehicle.weight ? `${vehicle.weight.toLocaleString('pt-BR')} kg` : '–'}
+                value={vehicle.weight ? `${vehicle.weight.toLocaleString('pt-BR')} kg` : 'Não disponível'}
                 isLast
               />
             </CollapsibleSection>

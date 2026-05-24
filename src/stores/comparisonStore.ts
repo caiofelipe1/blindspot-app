@@ -9,8 +9,7 @@ interface ComparisonState {
 }
 
 export const useComparisonStore = create<ComparisonState>((set, get) => ({
-  // Default: BMW M3 Competition vs Mercedes AMG C63 for demo
-  selectedIds: ['1', '2'],
+  selectedIds: [],
   addVehicle: (id) =>
     set(s => {
       if (s.selectedIds.includes(id) || s.selectedIds.length >= 3) return s;

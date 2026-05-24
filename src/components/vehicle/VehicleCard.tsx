@@ -1,8 +1,8 @@
-import { useState } from 'react';
 import { View, Text, Image, Pressable } from 'react-native';
 import { Heart, Star, Fuel, Zap, Car, Settings2 } from 'lucide-react-native';
 import { colors } from '@/src/styles/tokens';
 import type { VehicleMock } from '@/src/data/vehicles.mock';
+import { useFavoritesStore } from '@/src/stores/favoritesStore';
 
 interface VehicleCardProps {
   vehicle: VehicleMock;
@@ -18,7 +18,8 @@ function formatPrice(value: number): string {
 }
 
 export function VehicleCard({ vehicle, onPress }: VehicleCardProps) {
-  const [favorited, setFavorited] = useState(vehicle.isFavorite);
+  const { isFavorite, toggleFavorite } = useFavoritesStore();
+  const favorited = isFavorite(vehicle.id);
 
   return (
     <Pressable style={{ width: 170 }} onPress={onPress}>
@@ -50,12 +51,23 @@ export function VehicleCard({ vehicle, onPress }: VehicleCardProps) {
             <View />
           )}
 
-          <Pressable onPress={() => setFavorited(v => !v)} hitSlop={8}>
+          <Pressable
+            onPress={() => toggleFavorite(vehicle.id)}
+            hitSlop={8}
+            style={{
+              width: 30,
+              height: 30,
+              borderRadius: 15,
+              backgroundColor: favorited ? 'rgba(229,62,62,0.15)' : 'rgba(0,0,0,0.30)',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
             <Heart
-              size={18}
+              size={16}
               color={favorited ? '#E53E3E' : colors.white}
               fill={favorited ? '#E53E3E' : 'transparent'}
-              strokeWidth={1.5}
+              strokeWidth={2}
             />
           </Pressable>
         </View>

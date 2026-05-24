@@ -6,9 +6,9 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   ScrollView,
 } from 'react-native';
+import { useKeyboardVisible } from '@/src/utils/useKeyboardVisible';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ChevronLeft, Eye, EyeOff, Check, AlertCircle } from 'lucide-react-native';
@@ -29,6 +29,7 @@ function isValidEmail(email: string): boolean {
 export default function LoginScreen() {
   const router     = useRouter();
   const { isLoggedIn, login } = useAuthStore();
+  const keyboardVisible = useKeyboardVisible();
 
   const [email,         setEmail]         = useState('');
   const [senha,         setSenha]         = useState('');
@@ -107,30 +108,14 @@ export default function LoginScreen() {
   }
 
   function handleForgotPassword() {
-    if (!email.trim()) {
-      Alert.alert(
-        'Esqueceu a senha?',
-        'Digite seu email no campo acima para receber as instruções de recuperação.',
-        [{ text: 'OK' }],
-      );
-      return;
-    }
-    if (!emailOk) {
-      Alert.alert('Email inválido', 'Digite um email válido para recuperar sua senha.');
-      return;
-    }
-    Alert.alert(
-      'Email enviado! ✉️',
-      `Enviamos as instruções de recuperação para:\n\n${email.trim()}`,
-      [{ text: 'OK' }],
-    );
+    router.push('/reset-password');
   }
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top', 'bottom']}>
       <KeyboardAvoidingView
         className="flex-1"
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior="padding"
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
         {/* ── Header ── */}
@@ -151,12 +136,14 @@ export default function LoginScreen() {
             {/* ── Seção superior ── */}
             <View className="gap-7">
 
-              {/* Ilustração */}
-              <Image
-                source={IMG_CAR}
-                className="w-full h-[200px]"
-                resizeMode="contain"
-              />
+              {/* Ilustração — oculta quando teclado está aberto */}
+              {!keyboardVisible && (
+                <Image
+                  source={IMG_CAR}
+                  className="w-full h-[200px]"
+                  resizeMode="contain"
+                />
+              )}
 
               {/* Título */}
               <Text className="text-[40px] font-semibold text-normal text-center leading-[48px]">
@@ -258,18 +245,31 @@ export default function LoginScreen() {
             </View>
 
             {/* ── Botão Entrar ── */}
-            <View style={{ marginTop: 32 }}>
+            <View style={{ marginTop: 32, gap: 16 }}>
               <Button
                 label={loading ? 'Entrando...' : 'Entrar'}
                 onPress={handleLogin}
                 disabled={!canLogin}
               />
 
+              {/* Link para cadastro */}
+              <Pressable
+                onPress={() => router.push('/register')}
+                hitSlop={8}
+                style={{ alignItems: 'center' }}
+              >
+                <Text style={{ fontSize: 14, color: colors.subtleDark }}>
+                  Ainda não tem conta?{' '}
+                  <Text style={{ color: colors.primary, fontWeight: '600' }}>
+                    Cadastre-se
+                  </Text>
+                </Text>
+              </Pressable>
+
               {/* Dica de credenciais mock (visível apenas em dev) */}
               {__DEV__ && (
                 <Text
                   style={{
-                    marginTop: 12,
                     fontSize: 11,
                     color: colors.subtleLight,
                     textAlign: 'center',

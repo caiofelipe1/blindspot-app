@@ -7,9 +7,6 @@ import { Button } from '@/src/components/ui/Button';
 import { colors } from '@/src/styles/tokens';
 
 const IMG_CAR = require('../assets/images/home-car.png');
-// Ícones sociais via Figma MCP — substituir por assets locais se expirarem
-const IMG_GOOGLE = { uri: 'https://www.figma.com/api/mcp/asset/27d2ea08-95c1-4ebb-888b-e56305183028' };
-const IMG_APPLE  = { uri: 'https://www.figma.com/api/mcp/asset/5f9faa3f-4b2b-46ac-b224-333aaf4f1ede' };
 
 export default function IndexScreen() {
   const router = useRouter();
@@ -62,28 +59,13 @@ export default function IndexScreen() {
             />
           </View>
 
-          {/* Divisor "ou" */}
-          <View className="flex-row items-center gap-4">
-            <View className="flex-1 h-px bg-background" />
-            <Text className="text-sm font-medium text-normal">ou</Text>
-            <View className="flex-1 h-px bg-background" />
-          </View>
-
-          {/* Login social */}
-          <View className="flex-row justify-center gap-8">
-            <Pressable
-              className="w-[80px] h-[80px] rounded-3xl border border-subtle-light items-center justify-center"
-              hitSlop={8}
-            >
-              <Image source={IMG_GOOGLE} className="w-[40px] h-[40px]" resizeMode="contain" />
-            </Pressable>
-            <Pressable
-              className="w-[80px] h-[80px] rounded-3xl border border-subtle-light items-center justify-center"
-              hitSlop={8}
-            >
-              <Image source={IMG_APPLE} className="w-[40px] h-[40px]" resizeMode="contain" />
-            </Pressable>
-          </View>
+          {/* Explorar sem conta */}
+          <Pressable onPress={() => router.push('/explore')} hitSlop={8} style={{ alignItems: 'center' }}>
+            <Text style={{ fontSize: 14, color: colors.subtleDark }}>
+              Explorar sem cadastro{' '}
+              <Text style={{ color: colors.primary, fontWeight: '600' }}>→</Text>
+            </Text>
+          </Pressable>
 
         </View>
       </ScrollView>
