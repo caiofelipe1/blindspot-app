@@ -16,7 +16,7 @@ const VI: Record<string, ImageSourcePropType> = {
   seal:          require('../../assets/images/vehicles/seal.jpg'),
   ora03:         require('../../assets/images/vehicles/ora03.jpg'),
   model3:        require('../../assets/images/vehicles/model3.jpg'),
-  duster:        require('../../assets/images/vehicles/pulse.jpg'),
+  duster:        require('../../assets/images/vehicles/duster.jpg'),
 };
 
 export interface VehicleMock {

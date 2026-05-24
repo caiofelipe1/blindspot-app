@@ -1,50 +1,85 @@
-# Welcome to your Expo app 👋
+# BlindSpot — Inteligência Competitiva Automotiva
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Aplicativo mobile desenvolvido para o **Desafio 1 da Ford FIAP 2026**, com foco em inteligência competitiva automotiva. O BlindSpot permite consultar, visualizar e comparar fichas técnicas de veículos, com integração em tempo real à Tabela FIPE.
 
-## Get started
+---
 
-1. Install dependencies
+## Integrantes
 
-   ```bash
-   npm install
-   ```
+| RM | Nome |
+|----|------|
+| 565065 | Augusto Barcelos Barros |
+| 556197 | Caio Felipe de Lima Bezerra |
+| 555541 | Juan Francisco Alves Muradas |
+| 555931 | Lucas Derenze Simidu |
+| 554873 | Sofia Fernandes |
 
-2. Start the app
+---
 
-   ```bash
-   npx expo start
-   ```
+## Funcionalidades
 
-In the output, you'll find options to open the app in a
+- Explorar veículos por categorias (populares, favoritos, elétricos)
+- Busca por marca, modelo, ano e versão com integração à API FIPE
+- Ficha técnica completa: motor, transmissão, desempenho, dimensões e segurança
+- Consulta de preço FIPE em tempo real
+- Comparação lado a lado de até 3 veículos com identificação automática de vencedor por especificação
+- Favoritos com persistência local
+- Sistema de notificações in-app (toast)
+- Feedback tátil (haptics) em toda a navegação
+- Autenticação com fluxo de login e cadastro em 2 etapas
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+---
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Stack
 
-## Get a fresh project
+- **Expo** (SDK 54) + **React Native** + **TypeScript**
+- **Expo Router** — navegação baseada em arquivos
+- **NativeWind** — estilização via Tailwind para React Native
+- **Zustand** — gerenciamento de estado global com persistência via AsyncStorage
+- **Axios** — integração com a API FIPE (`parallelum.com.br`)
+- **expo-haptics** — feedback tátil
 
-When you're ready, run:
+---
+
+## Como rodar
+
+### Pré-requisitos
+
+- Node.js 18+
+- Expo Go instalado no celular ([Android](https://play.google.com/store/apps/details?id=host.exp.exponent) / [iOS](https://apps.apple.com/app/expo-go/id982107779))
+
+### Instalação
 
 ```bash
-npm run reset-project
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### Iniciar
 
-## Learn more
+```bash
+npm start
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+Escaneie o QR code com o Expo Go para abrir o app.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### Credenciais de teste
 
-## Join the community
+```
+Email: test@ford.com
+Senha: 123456
+```
 
-Join our community of developers creating universal apps.
+---
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Estrutura do projeto
+
+```
+app/                  # Rotas (Expo Router)
+src/
+  components/         # Componentes reutilizáveis
+  data/               # Mocks de veículos
+  services/           # Integração com API FIPE
+  stores/             # Estado global (Zustand)
+  styles/             # Tokens de design
+assets/               # Imagens e ícones
+```
