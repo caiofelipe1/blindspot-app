@@ -5,7 +5,10 @@ import {
   ArrowLeft, Heart, Zap, Fuel, Settings2,
   Ruler, Shield, Tag, Info, CheckCircle2, Car, Scale,
 } from 'lucide-react-native';
+import * as Haptics from 'expo-haptics';
 import type { ReactNode } from 'react';
+
+import { notifyFavoriteAdded, notifyComparisonReady } from '@/src/services/notificationService';
 
 import { colors } from '@/src/styles/tokens';
 import { StatusBadge } from '@/src/components/ui/StatusBadge';
@@ -124,7 +127,18 @@ export default function VehicleDetailsScreen() {
         </Text>
 
         <Pressable
-          onPress={() => inComparison ? removeVehicle(id ?? '') : (!comparisonFull && addVehicle(id ?? ''))}
+          onPress={() => {
+            if (inComparison) {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              removeVehicle(id ?? '');
+            } else if (!comparisonFull) {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              addVehicle(id ?? '');
+              if (selectedIds.length + 1 >= 2) {
+                notifyComparisonReady(selectedIds.length + 1);
+              }
+            }
+          }}
           hitSlop={8}
           style={({ pressed }) => ({ opacity: pressed ? 0.6 : comparisonFull ? 0.35 : 1 })}
         >
@@ -147,7 +161,14 @@ export default function VehicleDetailsScreen() {
         </Pressable>
 
         <Pressable
-          onPress={() => toggleFavorite(id ?? '')}
+          onPress={() => {
+            const adding = !favorited;
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            toggleFavorite(id ?? '');
+            if (adding) {
+              notifyFavoriteAdded(`${vehicle.brand} ${vehicle.model}`);
+            }
+          }}
           hitSlop={8}
           style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
         >

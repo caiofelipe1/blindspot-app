@@ -1,6 +1,7 @@
 import { View, Text, Pressable } from 'react-native';
 import { usePathname, useRouter, type Href } from 'expo-router';
 import { Search, Scale, Heart, User, LogIn } from 'lucide-react-native';
+import * as Haptics from 'expo-haptics';
 import type { ComponentType } from 'react';
 
 import { colors } from '@/src/styles/tokens';
@@ -39,7 +40,12 @@ export function BottomNav() {
           return (
             <Pressable
               key={String(route)}
-              onPress={() => { if (!isActive) router.navigate(route); }}
+              onPress={() => {
+                if (!isActive) {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.navigate(route);
+                }
+              }}
               className="items-center gap-1 w-[72px]"
             >
               <Icon size={28} color={iconColor} strokeWidth={1.5} />

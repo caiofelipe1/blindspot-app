@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { TrendingUp, RefreshCw, AlertCircle, CheckCircle2 } from 'lucide-react-native';
+import * as Haptics from 'expo-haptics';
 
 import { fipeService, type FipeVehiclePrice } from '@/src/services/fipeService';
 import { colors } from '@/src/styles/tokens';
@@ -29,6 +30,7 @@ export function FipePriceSection({ brand, model, year }: Props) {
   const [state, setState] = useState<State>({ status: 'idle' });
 
   async function consult() {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setState({ status: 'loading', step: 'Buscando marcas…' });
     try {
       // 1. Find brand
@@ -44,35 +46,57 @@ export function FipePriceSection({ brand, model, year }: Props) {
         return;
       }
 
-      // 2. Find model
+      // 2. Find model — whole-word matching para evitar falsos positivos (ex: "polo" em "apolo")
       setState({ status: 'loading', step: 'Buscando modelos…' });
       const models = await fipeService.getModels(foundBrand.codigo);
       const nm = norm(model);
-      const firstWord = nm.split(' ')[0];
-      const foundModel =
-        models.find(m => norm(m.nome) === nm) ??
-        models.find(m => norm(m.nome).startsWith(firstWord)) ??
-        models.find(m => nm.includes(norm(m.nome).split(' ')[0]));
+      const modelWords = nm.split(/[\s-]+/).filter(w => w.length >= 2);
 
-      if (!foundModel) {
-        setState({ status: 'error', message: `Modelo "${model}" não encontrado na FIPE para ${foundBrand.nome}.` });
+      function wordScore(fipeNome: string): number {
+        const fn = norm(fipeNome);
+        return modelWords.filter(w => new RegExp(`(^|[\\s-])${w}([\\s-]|$)`).test(fn)).length;
+      }
+
+      const exactMatch = models.find(m => norm(m.nome) === nm);
+      const minScore = Math.min(2, modelWords.length);
+      const candidates = exactMatch
+        ? [exactMatch]
+        : models
+            .map(m => ({ m, score: wordScore(m.nome) }))
+            .filter(({ score }) => score >= minScore)
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 5)
+            .map(({ m }) => m);
+
+      if (candidates.length === 0) {
+        setState({ status: 'error', message: `"${model}" não encontrado na tabela FIPE. O modelo pode não estar cadastrado.` });
         return;
       }
 
-      // 3. Find year
-      setState({ status: 'loading', step: 'Buscando anos…' });
-      const years = await fipeService.getYears(foundBrand.codigo, foundModel.codigo);
-      const foundYear =
-        years.find(y => y.codigo.startsWith(String(year))) ?? years[0];
+      // 3. Testa os top candidatos até achar um com o ano correto (±3 anos)
+      let bestMatch: typeof candidates[0] | null = null;
+      let foundYear: Awaited<ReturnType<typeof fipeService.getYears>>[0] | null = null;
 
-      if (!foundYear) {
-        setState({ status: 'error', message: 'Nenhum ano disponível para este modelo na FIPE.' });
+      for (const candidate of candidates) {
+        setState({ status: 'loading', step: 'Buscando anos…' });
+        const years = await fipeService.getYears(foundBrand.codigo, candidate.codigo);
+        const match =
+          years.find(y => y.codigo.startsWith(String(year))) ??
+          years.find(y => {
+            const fy = parseInt(y.codigo.split('-')[0], 10);
+            return !isNaN(fy) && Math.abs(fy - year) <= 3;
+          });
+        if (match) { bestMatch = candidate; foundYear = match; break; }
+      }
+
+      if (!bestMatch || !foundYear) {
+        setState({ status: 'error', message: `${model} ${year} não encontrado na tabela FIPE. O modelo pode não estar cadastrado neste ano.` });
         return;
       }
 
       // 4. Fetch price
       setState({ status: 'loading', step: 'Consultando preço…' });
-      const price = await fipeService.getPrice(foundBrand.codigo, foundModel.codigo, foundYear.codigo);
+      const price = await fipeService.getPrice(foundBrand.codigo, bestMatch.codigo, foundYear.codigo);
       setState({ status: 'success', data: price });
     } catch {
       setState({ status: 'error', message: 'Falha ao conectar com a API FIPE. Verifique sua conexão.' });

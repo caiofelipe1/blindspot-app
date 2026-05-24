@@ -1,12 +1,11 @@
-import { useState } from 'react';
+import { type ReactNode } from 'react';
 import { ScrollView, View, Text, Image, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
-  ArrowLeft, Share2, Heart, Trophy, ChevronDown, ChevronUp,
+  ArrowLeft, Share2, Trophy, ChevronDown, ChevronUp,
   ChevronsUp, ChevronsDown, Zap, Settings2, Fuel, Ruler, Tag, Star,
 } from 'lucide-react-native';
-import type { ReactNode } from 'react';
 
 import { colors } from '@/src/styles/tokens';
 import { BottomNav } from '@/src/components/layout/BottomNav';
@@ -305,7 +304,6 @@ const ALL_SECTION_IDS = ['motor', 'transmission', 'performance', 'dimensions', '
 export default function ComparisonScreen() {
   const router = useRouter();
   const { selectedIds } = useComparisonStore();
-  const [favorited, setFavorited] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set(ALL_SECTION_IDS)
   );
@@ -388,41 +386,19 @@ export default function ComparisonScreen() {
 
         <View style={{ flex: 1 }} />
 
-        <View style={{ flexDirection: 'row', gap: 8 }}>
-          <Pressable
-            hitSlop={8}
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: 20,
-              backgroundColor: colors.background,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Share2 size={20} color={colors.normal} strokeWidth={1.5} />
-          </Pressable>
-
-          <Pressable
-            onPress={() => setFavorited(f => !f)}
-            hitSlop={8}
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: 20,
-              backgroundColor: colors.background,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Heart
-              size={20}
-              color={favorited ? '#E53E3E' : colors.subtleDark}
-              fill={favorited ? '#E53E3E' : 'transparent'}
-              strokeWidth={1.5}
-            />
-          </Pressable>
-        </View>
+        <Pressable
+          hitSlop={8}
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            backgroundColor: colors.background,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Share2 size={20} color={colors.normal} strokeWidth={1.5} />
+        </Pressable>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} bounces>

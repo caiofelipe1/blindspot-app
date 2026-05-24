@@ -29,6 +29,7 @@ interface SelectorProps<T> {
   value: string;
   disabled?: boolean;
   loading?: boolean;
+  optional?: boolean;
   items: T[];
   getKey: (item: T) => string;
   getLabel: (item: T) => string;
@@ -44,6 +45,7 @@ function Selector<T>({
   value,
   disabled,
   loading,
+  optional,
   items,
   getKey,
   getLabel,
@@ -101,9 +103,16 @@ function Selector<T>({
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 18, gap: 12 }}>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 11, fontWeight: '600', color: colors.subtleDark, letterSpacing: 0.6, textTransform: 'uppercase', marginBottom: 2 }}>
-              {label}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+              <Text style={{ fontSize: 11, fontWeight: '600', color: colors.subtleDark, letterSpacing: 0.6, textTransform: 'uppercase' }}>
+                {label}
+              </Text>
+              {optional && (
+                <Text style={{ fontSize: 10, fontWeight: '500', color: colors.subtleLight, letterSpacing: 0.3 }}>
+                  opcional
+                </Text>
+              )}
+            </View>
             <Text style={{ fontSize: 16, fontWeight: '500', color: isSelected ? colors.normal : colors.subtleLight }}>
               {value || placeholder}
             </Text>
@@ -365,6 +374,7 @@ export default function SearchScreen() {
             value={selectedModel?.nome ?? ''}
             disabled={!selectedBrand}
             loading={modelsLoading}
+            optional
             items={models}
             getKey={m => String(m.codigo)}
             getLabel={m => m.nome}
@@ -382,6 +392,7 @@ export default function SearchScreen() {
             value={selectedYear ? selectedYear.nome : ''}
             disabled={!selectedModel}
             loading={yearsLoading}
+            optional
             items={years}
             getKey={y => y.codigo}
             getLabel={y => y.nome}
@@ -402,9 +413,14 @@ export default function SearchScreen() {
             paddingVertical: 16,
           }}
         >
-          <Text style={{ fontSize: 11, fontWeight: '600', color: colors.subtleDark, letterSpacing: 0.6, textTransform: 'uppercase', marginBottom: 6 }}>
-            Versão (opcional)
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+            <Text style={{ fontSize: 11, fontWeight: '600', color: colors.subtleDark, letterSpacing: 0.6, textTransform: 'uppercase' }}>
+              Versão
+            </Text>
+            <Text style={{ fontSize: 10, fontWeight: '500', color: colors.subtleLight, letterSpacing: 0.3 }}>
+              opcional
+            </Text>
+          </View>
           <TextInput
             style={{ fontSize: 16, fontWeight: '500', color: colors.normal, padding: 0 }}
             value={versao}
@@ -434,7 +450,8 @@ export default function SearchScreen() {
 
         <Pressable
           onPress={handleSearch}
-          style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}
+          disabled={!selectedBrand}
+          style={({ pressed }) => ({ opacity: !selectedBrand ? 0.4 : pressed ? 0.8 : 1 })}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.primary, borderRadius: 14, paddingHorizontal: 28, paddingVertical: 15 }}>
             <Search size={18} color="#FFFFFF" strokeWidth={1.5} />

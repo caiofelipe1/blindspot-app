@@ -1,7 +1,9 @@
-import { View, Text, Pressable, ScrollView, Image, useWindowDimensions } from 'react-native';
+import { useState } from 'react';
+import { View, Text, Pressable, ScrollView, Image, StyleSheet, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Clock, Heart } from 'lucide-react-native';
+import { Clock, Heart, X } from 'lucide-react-native';
+import * as Haptics from 'expo-haptics';
 
 import { BottomNav } from '@/src/components/layout/BottomNav';
 import { useFavoritesStore } from '@/src/stores/favoritesStore';
@@ -20,13 +22,15 @@ function formatPrice(value: number): string {
 interface FavoriteCardProps {
   vehicle: VehicleMock;
   cardWidth: number;
+  isEditing: boolean;
   onPress: () => void;
+  onRemove: () => void;
 }
 
-function FavoriteCard({ vehicle, cardWidth, onPress }: FavoriteCardProps) {
+function FavoriteCard({ vehicle, cardWidth, isEditing, onPress, onRemove }: FavoriteCardProps) {
   return (
     <Pressable
-      onPress={onPress}
+      onPress={isEditing ? undefined : onPress}
       style={{ width: cardWidth, gap: 8 }}
     >
       <View
@@ -46,6 +50,25 @@ function FavoriteCard({ vehicle, cardWidth, onPress }: FavoriteCardProps) {
           style={{ width: '100%', height: '100%' }}
           resizeMode="cover"
         />
+        {isEditing && (
+          <View style={{ ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.35)', alignItems: 'center', justifyContent: 'center' }}>
+            <Pressable
+              onPress={onRemove}
+              hitSlop={12}
+              style={({ pressed }) => ({
+                opacity: pressed ? 0.7 : 1,
+                width: 44,
+                height: 44,
+                borderRadius: 22,
+                backgroundColor: '#E53E3E',
+                alignItems: 'center',
+                justifyContent: 'center',
+              })}
+            >
+              <X size={20} color="#FFFFFF" strokeWidth={2.5} />
+            </Pressable>
+          </View>
+        )}
       </View>
       <View style={{ gap: 2 }}>
         <Text
@@ -137,7 +160,8 @@ function EmptyState() {
 export default function FavoritesScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
-  const { favoriteIds } = useFavoritesStore();
+  const { favoriteIds, toggleFavorite } = useFavoritesStore();
+  const [isEditing, setIsEditing] = useState(false);
 
   const GAP = 20;
   const HORIZONTAL_PADDING = 24;
@@ -169,16 +193,21 @@ export default function FavoritesScreen() {
         </Text>
         {favoriteVehicles.length > 0 && (
           <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setIsEditing(e => !e);
+            }}
             style={{
               borderWidth: 1,
-              borderColor: colors.subtleDark,
+              borderColor: isEditing ? colors.primary : colors.subtleDark,
               borderRadius: 16,
               paddingHorizontal: 12,
               paddingVertical: 8,
+              backgroundColor: isEditing ? 'rgba(0,119,200,0.07)' : 'transparent',
             }}
           >
-            <Text style={{ fontSize: 14, fontWeight: '500', color: colors.normal, letterSpacing: 0.4 }}>
-              Editar
+            <Text style={{ fontSize: 14, fontWeight: '500', color: isEditing ? colors.primary : colors.normal, letterSpacing: 0.4 }}>
+              {isEditing ? 'Concluir' : 'Editar'}
             </Text>
           </Pressable>
         )}
@@ -207,7 +236,12 @@ export default function FavoritesScreen() {
                     key={item.vehicle.id}
                     vehicle={item.vehicle}
                     cardWidth={cardWidth}
+                    isEditing={isEditing}
                     onPress={() => router.push(`/vehicle/${item.vehicle.id}` as never)}
+                    onRemove={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                      toggleFavorite(item.vehicle.id);
+                    }}
                   />
                 ),
               )}

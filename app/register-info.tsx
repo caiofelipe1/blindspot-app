@@ -20,7 +20,7 @@ import { useAuthStore } from '@/src/stores/authStore';
 
 const IMG_CAR = require('../assets/images/register-car.png');
 
-const TOTAL_STEPS = 3;
+const TOTAL_STEPS = 2;
 
 export default function RegisterInfoScreen() {
   const router = useRouter();

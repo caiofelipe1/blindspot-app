@@ -9,6 +9,7 @@ import { Animated, Image, View } from 'react-native';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { ToastContainer } from '@/src/components/ui/Toast';
 
 const LOGO = require('../assets/images/splash-icon.png');
 
@@ -57,6 +58,7 @@ export default function RootLayout() {
         <Stack.Screen name="vehicle/[id]"   options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="auto" />
+      <ToastContainer />
 
       {/* Loading overlay com logo — visível até o app estar pronto */}
       {!splashDone && (

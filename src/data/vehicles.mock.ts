@@ -16,6 +16,7 @@ const VI: Record<string, ImageSourcePropType> = {
   seal:          require('../../assets/images/vehicles/seal.jpg'),
   ora03:         require('../../assets/images/vehicles/ora03.jpg'),
   model3:        require('../../assets/images/vehicles/model3.jpg'),
+  duster:        require('../../assets/images/vehicles/pulse.jpg'),
 };
 
 export interface VehicleMock {
@@ -169,6 +170,29 @@ export const popularVehicles: VehicleMock[] = [
       { label: 'Garantia', value: '5 anos' },
     ],
     dataSources: ['Mitsubishi Brasil', 'Fabricante'],
+    confidenceStatus: 'verificado',
+  },
+  {
+    id: '16', brand: 'Renault', model: 'Duster', version: 'Iconic 1.3 TCe CVT',
+    year: 2024, image: VI.duster, price: 119990, rating: 4.4,
+    fuel: 'Flex (gasolina/etanol)', power: '130 cv', bodyType: 'SUV', transmission: 'CVT',
+    category: 'popular', isFavorite: false, isElectric: false,
+    torque: '240 Nm', engineType: '1.3 TCe Turbo Flex', traction: 'Dianteira (FWD)',
+    dimensions: { comprimento: 4341, largura: 1804, altura: 1694, entre_eixos: 2673, portaMalas: 472 },
+    weight: 1313,
+    urbanConsumption: '11,4 km/l', highwayConsumption: '13,8 km/l',
+    acceleration: '9,9 s', topSpeed: '178 km/h',
+    safetyFeatures: [
+      '6 airbags', 'ABS + EBD', 'Controle de estabilidade (ESC)',
+      'Câmera de ré', 'Alerta de ponto cego', 'Assistência de partida em subida',
+    ],
+    otherAttributes: [
+      { label: 'Carroceria', value: 'SUV compacto' },
+      { label: 'Assentos', value: '5' },
+      { label: 'Tanque', value: '50 L' },
+      { label: 'Garantia', value: '3 anos' },
+    ],
+    dataSources: ['Renault Brasil', 'Fabricante', 'Inmetro'],
     confidenceStatus: 'verificado',
   },
   {
