@@ -33,15 +33,15 @@ Aplicativo mobile desenvolvido para o **Desafio 1 da Ford FIAP 2026**, com foco 
 ## Stack
 
 - **Expo** (SDK 54) + **React Native** + **TypeScript**
-- **Expo Router** — navegação baseada em arquivos
-- **NativeWind** — estilização via Tailwind para React Native
-- **Zustand** — gerenciamento de estado global com persistência via AsyncStorage
-- **Axios** — integração com a API FIPE (`parallelum.com.br`)
-- **expo-haptics** — feedback tátil
+- **Expo Router** - navegação baseada em arquivos
+- **NativeWind** - estilização via Tailwind para React Native
+- **Zustand** - gerenciamento de estado global com persistência via AsyncStorage
+- **Axios** - integração com a API FIPE (`parallelum.com.br`)
+- **expo-haptics** - feedback tátil
 
 ---
 
-## Como rodar
+## Como rodar o Blindspot App
 
 ### Pré-requisitos
 
