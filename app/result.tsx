@@ -5,36 +5,10 @@ import { ArrowLeft, SlidersHorizontal } from 'lucide-react-native';
 
 import { VehicleCard } from '@/src/components/vehicle/VehicleCard';
 import { BottomNav } from '@/src/components/layout/BottomNav';
-import { popularVehicles, favoriteVehicles, electricVehicles } from '@/src/data/vehicles.mock';
-import type { VehicleMock } from '@/src/data/vehicles.mock';
+import { ALL_VEHICLES } from '@/src/data/vehicles.mock';
+import { filterCatalog } from '@/src/utils/catalogSearch';
 import { colors } from '@/src/styles/tokens';
-
-const ALL_VEHICLES: VehicleMock[] = [
-  ...popularVehicles,
-  ...favoriteVehicles,
-  ...electricVehicles,
-];
-
-function matches(a: string, b: string): boolean {
-  // bidirectional: "Ranger" matches "Ranger 2.2 XLS 4WD CD Diesel" and vice-versa
-  const la = a.toLowerCase();
-  const lb = b.toLowerCase();
-  return la.includes(lb) || lb.includes(la);
-}
-
-function filterVehicles(
-  vehicles: VehicleMock[],
-  params: { marca?: string; modelo?: string; ano?: string; versao?: string },
-): VehicleMock[] {
-  return vehicles.filter(v => {
-    const { marca, modelo, ano, versao } = params;
-    if (marca?.trim() && !matches(v.brand, marca.trim())) return false;
-    if (modelo?.trim() && !matches(v.model, modelo.trim())) return false;
-    if (ano?.trim() && String(v.year) !== ano.trim()) return false;
-    if (versao?.trim() && !matches(v.version, versao.trim())) return false;
-    return true;
-  });
-}
+import { useVehicleGrid } from '@/src/utils/useVehicleGrid';
 
 function buildSummary(params: { marca?: string; modelo?: string; ano?: string; versao?: string }): string {
   const parts = [params.marca, params.modelo, params.ano, params.versao].filter(p => p?.trim());
@@ -85,14 +59,16 @@ function EmptyState({ onBack }: { onBack: () => void }) {
 
 export default function ResultScreen() {
   const router = useRouter();
+  const grid = useVehicleGrid();
   const params = useLocalSearchParams<{
     marca?: string;
     modelo?: string;
     ano?: string;
     versao?: string;
+    catalogo?: string;
   }>();
 
-  const results = filterVehicles(ALL_VEHICLES, params);
+  const results = filterCatalog(ALL_VEHICLES, params);
   const summary = buildSummary(params);
   const count = results.length;
 
@@ -112,7 +88,7 @@ export default function ResultScreen() {
         }}
       >
         <Pressable
-          onPress={() => router.back()}
+          onPress={() => router.canGoBack() ? router.back() : router.replace('/search')}
           hitSlop={8}
           style={{
             width: 40,
@@ -135,7 +111,7 @@ export default function ResultScreen() {
               letterSpacing: 0.4,
             }}
           >
-            Resultados
+            {params.catalogo === 'todos' ? 'Todos os veículos' : 'Resultados'}
           </Text>
           <Text
             style={{
@@ -146,7 +122,7 @@ export default function ResultScreen() {
             }}
             numberOfLines={1}
           >
-            {summary}
+            {params.catalogo === 'todos' ? 'Catálogo BlindSpot' : summary}
           </Text>
         </View>
 
@@ -173,23 +149,25 @@ export default function ResultScreen() {
 
       {/* ── Lista ── */}
       {results.length === 0 ? (
-        <EmptyState onBack={() => router.back()} />
+        <EmptyState onBack={() => router.canGoBack() ? router.back() : router.replace('/search')} />
       ) : (
         <FlatList
           data={results}
           keyExtractor={item => item.id}
-          numColumns={2}
+          key={grid.columns}
+          numColumns={grid.columns}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
             paddingHorizontal: 16,
             paddingTop: 16,
             paddingBottom: 16,
           }}
-          columnWrapperStyle={{ gap: 20, marginBottom: 20 }}
+          columnWrapperStyle={grid.columns > 1 ? { gap: grid.gap } : undefined}
           renderItem={({ item }) => (
-            <View style={{ flex: 1, alignItems: 'center' }}>
+            <View className="mb-5">
               <VehicleCard
                 vehicle={item}
+                width={grid.cardWidth}
                 onPress={() => router.push(`/vehicle/${item.id}` as never)}
               />
             </View>

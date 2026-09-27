@@ -17,13 +17,16 @@ import { Input } from '@/src/components/ui/Input';
 import { colors } from '@/src/styles/tokens';
 import { useKeyboardVisible } from '@/src/utils/useKeyboardVisible';
 import { useAuthStore } from '@/src/stores/authStore';
+import { useAuthReady } from '@/src/utils/useAuthReady';
+import { AuthStorageNotice } from '@/src/components/ui/AuthStorageNotice';
 
 const IMG_CAR = require('../assets/images/register-car.png');
 
-const TOTAL_STEPS = 3;
+const TOTAL_STEPS = 2;
 
 export default function RegisterScreen() {
   const router = useRouter();
+  const authReady = useAuthReady();
   const keyboardVisible = useKeyboardVisible();
   const { setPendingRegistration } = useAuthStore();
 
@@ -50,6 +53,7 @@ export default function RegisterScreen() {
   }
 
   function handleProximo() {
+    if (!authReady) return;
     const e = validar();
     if (Object.keys(e).length > 0) { setErros(e); return; }
     setPendingRegistration({ name: nome.trim(), email: email.trim(), password: senha });
@@ -61,7 +65,7 @@ export default function RegisterScreen() {
 
       {/* Header */}
       <View className="h-[64px] bg-white border-b border-background flex-row items-end pb-4 px-6 gap-4">
-        <Pressable onPress={() => router.back()} hitSlop={8}>
+        <Pressable onPress={() => router.canGoBack() ? router.back() : router.replace('/login')} hitSlop={8}>
           <ChevronLeft size={24} color={colors.normal} strokeWidth={1.5} />
         </Pressable>
         <View className="flex-1 flex-row gap-1.5">
@@ -162,7 +166,8 @@ export default function RegisterScreen() {
           </View>
 
           {/* Botão */}
-          <Button label="Próximo" onPress={handleProximo} />
+          <AuthStorageNotice />
+          <Button label="Próximo" onPress={handleProximo} disabled={!authReady} />
 
         </ScrollView>
       </KeyboardAvoidingView>

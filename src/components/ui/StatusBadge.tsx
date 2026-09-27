@@ -14,7 +14,7 @@ const config: Record<Confiabilidade, { label: string; bg: string; text: string }
     text: 'text-green-700',
   },
   parcial: {
-    label: 'Parcial',
+    label: 'Revisão parcial',
     bg: 'bg-yellow-100',
     text: 'text-yellow-700',
   },

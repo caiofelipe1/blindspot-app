@@ -1,9 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ALL_VEHICLES } from '@/src/data/vehicles.mock';
-
-const INITIAL_IDS = ALL_VEHICLES.filter(v => v.isFavorite).map(v => v.id);
 
 interface FavoritesState {
   favoriteIds: string[];
@@ -15,7 +12,7 @@ interface FavoritesState {
 export const useFavoritesStore = create<FavoritesState>()(
   persist(
     (set, get) => ({
-      favoriteIds: INITIAL_IDS,
+      favoriteIds: [],
       _hydrated: false,
 
       toggleFavorite: (id) => {

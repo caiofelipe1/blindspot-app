@@ -8,9 +8,11 @@ import { VehicleCard } from '@/src/components/vehicle/VehicleCard';
 import { useRecentlyViewedStore } from '@/src/stores/recentlyViewedStore';
 import { ALL_VEHICLES } from '@/src/data/vehicles.mock';
 import { colors } from '@/src/styles/tokens';
+import { useVehicleGrid } from '@/src/utils/useVehicleGrid';
 
 export default function RecentlyViewedScreen() {
   const router = useRouter();
+  const grid = useVehicleGrid();
   const { recentIds } = useRecentlyViewedStore();
 
   const vehicles = recentIds
@@ -32,7 +34,7 @@ export default function RecentlyViewedScreen() {
         }}
       >
         <Pressable
-          onPress={() => router.back()}
+          onPress={() => router.canGoBack() ? router.back() : router.replace('/favorites')}
           hitSlop={8}
           style={{
             width: 40,
@@ -86,14 +88,16 @@ export default function RecentlyViewedScreen() {
         <FlatList
           data={vehicles}
           keyExtractor={item => item.id}
-          numColumns={2}
+          key={grid.columns}
+          numColumns={grid.columns}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 16 }}
-          columnWrapperStyle={{ gap: 20, marginBottom: 20 }}
+          columnWrapperStyle={grid.columns > 1 ? { gap: grid.gap } : undefined}
           renderItem={({ item }) => (
-            <View style={{ flex: 1, alignItems: 'center' }}>
+            <View className="mb-5">
               <VehicleCard
                 vehicle={item}
+                width={grid.cardWidth}
                 onPress={() => router.push(`/vehicle/${item.id}` as never)}
               />
             </View>

@@ -1,5 +1,4 @@
-import { useEffect } from 'react';
-import { View, Text, Pressable, ScrollView, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, Pressable, ScrollView, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Search } from 'lucide-react-native';
@@ -7,29 +6,18 @@ import { Search } from 'lucide-react-native';
 import { VehicleSection } from '@/src/components/vehicle/VehicleSection';
 import { BottomNav } from '@/src/components/layout/BottomNav';
 import { colors } from '@/src/styles/tokens';
-import { useVehicleStore } from '@/src/stores/vehicleStore';
+import { catalogOptions } from '@/src/utils/catalogSearch';
 import {
   popularVehicles,
   favoriteVehicles,
   electricVehicles,
+  ALL_VEHICLES,
 } from '@/src/data/vehicles.mock';
 
-const POPULAR_BRANDS = [
-  'Toyota', 'Honda', 'Volkswagen', 'Fiat', 'Chevrolet',
-  'Ford', 'Hyundai', 'Renault', 'Jeep', 'BMW',
-];
+const brandsToShow = catalogOptions(ALL_VEHICLES, {}).brands.map(nome => ({ codigo: nome, nome }));
 
 export default function ExploreScreen() {
   const router = useRouter();
-  const { fipeBrands, fipeBrandsLoading, fetchFipeBrands } = useVehicleStore();
-
-  useEffect(() => {
-    fetchFipeBrands();
-  }, []);
-
-  const brandsToShow = fipeBrands.length > 0
-    ? fipeBrands.slice(0, 20)
-    : POPULAR_BRANDS.map((nome, i) => ({ codigo: String(i), nome }));
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top']}>
@@ -47,7 +35,6 @@ export default function ExploreScreen() {
             borderRadius: 24,
             paddingHorizontal: 20,
             height: 48,
-            opacity: 0.6,
           }}
         >
           <Search size={16} color={colors.subtleDark} strokeWidth={1.5} />
@@ -64,7 +51,7 @@ export default function ExploreScreen() {
         </Pressable>
       </View>
 
-      {/* Marcas FIPE */}
+      {/* Marcas com fichas no catálogo */}
       <View style={{ marginBottom: 8 }}>
         <View
           style={{
@@ -78,13 +65,9 @@ export default function ExploreScreen() {
           <Text style={{ fontSize: 16, fontWeight: '600', color: colors.normal }}>
             Marcas
           </Text>
-          {fipeBrandsLoading ? (
-            <ActivityIndicator size="small" color={colors.primary} />
-          ) : (
             <Text style={{ fontSize: 11, color: colors.subtleDark, letterSpacing: 0.3 }}>
-              via FIPE
+              No catálogo
             </Text>
-          )}
         </View>
         <FlatList
           data={brandsToShow}
@@ -94,7 +77,7 @@ export default function ExploreScreen() {
           contentContainerStyle={{ paddingHorizontal: 24, gap: 8 }}
           renderItem={({ item }) => (
             <Pressable
-              onPress={() => router.push('/search')}
+              onPress={() => router.push({ pathname: '/search', params: { marca: item.nome } })}
               style={{
                 paddingHorizontal: 14,
                 paddingVertical: 8,
@@ -126,17 +109,17 @@ export default function ExploreScreen() {
         contentContainerStyle={{ gap: 24, paddingBottom: 16 }}
       >
         <VehicleSection
-          title="Mais acessados essa semana"
+          title="Destaques do catálogo"
           vehicles={popularVehicles}
         />
 
         <VehicleSection
-          title="Favoritos para acessar agora"
+          title="Outros modelos"
           vehicles={favoriteVehicles}
         />
 
         <VehicleSection
-          title="Top elétricos custo benefício"
+          title="Elétricos"
           vehicles={electricVehicles}
         />
       </ScrollView>

@@ -1,12 +1,14 @@
 import { View, Text, Pressable, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import { Heart, LogOut, Info, ChevronRight, Star } from 'lucide-react-native';
 
 import { BottomNav } from '@/src/components/layout/BottomNav';
 import { useAuthStore } from '@/src/stores/authStore';
 import { useFavoritesStore } from '@/src/stores/favoritesStore';
 import { colors } from '@/src/styles/tokens';
+import { useAuthReady } from '@/src/utils/useAuthReady';
+import { AuthStorageNotice } from '@/src/components/ui/AuthStorageNotice';
 
 function getInitials(name: string): string {
   return name
@@ -68,6 +70,7 @@ function MenuRow({ icon, iconBg, label, onPress, isLast }: MenuRowProps) {
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const authReady = useAuthReady();
   const { user, logout } = useAuthStore();
   const { favoriteIds } = useFavoritesStore();
 
@@ -89,9 +92,9 @@ export default function ProfileScreen() {
     );
   }
 
+  if (!authReady) return <SafeAreaView className="flex-1 bg-white"><View className="flex-1 justify-center"><AuthStorageNotice /></View><BottomNav /></SafeAreaView>;
   if (!user) {
-    router.replace('/login');
-    return null;
+    return <Redirect href="/login" />;
   }
 
   return (

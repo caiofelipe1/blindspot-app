@@ -4,7 +4,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { X } from 'lucide-react-native';
 
 import { useToastStore } from '@/src/stores/toastStore';
-import { colors } from '@/src/styles/tokens';
 
 function ToastItem({ id, title, body }: { id: string; title: string; body: string }) {
   const dismiss = useToastStore((s) => s.dismiss);
@@ -25,7 +24,7 @@ function ToastItem({ id, title, body }: { id: string; title: string; body: strin
     }, 3500);
 
     return () => clearTimeout(hideTimer);
-  }, []);
+  }, [dismiss, id, opacity, translateY]);
 
   return (
     <Animated.View style={{ transform: [{ translateY }], opacity }}>

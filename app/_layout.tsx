@@ -1,14 +1,13 @@
 import '../global.css';
 
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Image, View } from 'react-native';
+import { Animated, Image } from 'react-native';
 import 'react-native-reanimated';
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { ToastContainer } from '@/src/components/ui/Toast';
 
 const LOGO = require('../assets/images/splash-icon.png');
@@ -20,7 +19,6 @@ export const unstable_settings = {
 };
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
   const [splashDone, setSplashDone] = useState(false);
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
@@ -36,10 +34,10 @@ export default function RootLayout() {
     }, 900);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [fadeAnim]);
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={DefaultTheme}>
       <Stack>
         {/* Telas raiz — fade para parecer troca de aba, sem slide */}
         <Stack.Screen name="index"      options={{ headerShown: false, animation: 'none' }} />
@@ -52,13 +50,12 @@ export default function RootLayout() {
         <Stack.Screen name="login"          options={{ headerShown: false }} />
         <Stack.Screen name="register"       options={{ headerShown: false }} />
         <Stack.Screen name="register-info"  options={{ headerShown: false }} />
-        <Stack.Screen name="reset-password" options={{ headerShown: false }} />
         <Stack.Screen name="search"         options={{ headerShown: false }} />
         <Stack.Screen name="result"           options={{ headerShown: false }} />
         <Stack.Screen name="recently-viewed" options={{ headerShown: false }} />
         <Stack.Screen name="vehicle/[id]"   options={{ headerShown: false }} />
       </Stack>
-      <StatusBar style="auto" />
+      <StatusBar style={splashDone ? 'dark' : 'light'} />
       <ToastContainer />
 
       {/* Loading overlay com logo — visível até o app estar pronto */}

@@ -1,4 +1,4 @@
-import { View, Pressable, type PressableProps, type ViewProps } from 'react-native';
+import { View, Pressable, type PressableProps } from 'react-native';
 import type { ReactNode } from 'react';
 
 interface AppCardProps {

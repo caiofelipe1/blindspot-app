@@ -1,10 +1,11 @@
-import { ScrollView, View, Text, Image, Pressable } from 'react-native';
+import { VehiclePriceSummary } from '@/src/components/vehicle/VehiclePriceSummary';
+import { Alert, Linking, ScrollView, View, Text, Image, Pressable } from 'react-native';
 import { useEffect } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import {
   ArrowLeft, Heart, Zap, Fuel, Settings2,
-  Ruler, Shield, Tag, Info, CheckCircle2, Car, Scale,
+  Ruler, Shield, Tag, Info, Car, Scale,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import type { ReactNode } from 'react';
@@ -17,17 +18,11 @@ import { CollapsibleSection } from '@/src/components/vehicle/CollapsibleSection'
 import { SpecRow } from '@/src/components/vehicle/SpecRow';
 import { FipePriceSection } from '@/src/components/vehicle/FipePriceSection';
 import { useFavoritesStore } from '@/src/stores/favoritesStore';
-import { useComparisonStore } from '@/src/stores/comparisonStore';
+import { MAX_COMPARISON_VEHICLES, useComparisonStore } from '@/src/stores/comparisonStore';
 import { useRecentlyViewedStore } from '@/src/stores/recentlyViewedStore';
 import { ALL_VEHICLES } from '@/src/data/vehicles.mock';
 
-function formatPrice(value: number): string {
-  return value.toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-    maximumFractionDigits: 0,
-  });
-}
+
 
 function SummaryPill({ icon, label }: { icon: ReactNode; label: string }) {
   return (
@@ -58,11 +53,11 @@ export default function VehicleDetailsScreen() {
   const { addRecentlyViewed } = useRecentlyViewedStore();
 
   useEffect(() => {
-    if (id) addRecentlyViewed(id);
-  }, [id]);
+    if (id && ALL_VEHICLES.some(v => v.id === id)) addRecentlyViewed(id);
+  }, [id, addRecentlyViewed]);
   const favorited = favoriteIds.includes(id ?? '');
   const inComparison = selectedIds.includes(id ?? '');
-  const comparisonFull = selectedIds.length >= 3 && !inComparison;
+  const comparisonFull = selectedIds.length >= MAX_COMPARISON_VEHICLES && !inComparison;
 
   const vehicle = ALL_VEHICLES.find(v => v.id === id);
 
@@ -74,7 +69,7 @@ export default function VehicleDetailsScreen() {
             Veículo não encontrado
           </Text>
           <Pressable
-            onPress={() => router.back()}
+            onPress={() => router.canGoBack() ? router.back() : router.replace('/explore')}
             style={{
               borderWidth: 1,
               borderColor: colors.subtleLight,
@@ -91,7 +86,7 @@ export default function VehicleDetailsScreen() {
   }
 
   const hasDimensions = !!vehicle.dimensions;
-  const hasPerformance = !!(vehicle.urbanConsumption || vehicle.acceleration);
+  const hasPerformance = !!(vehicle.urbanConsumption || vehicle.highwayConsumption || vehicle.acceleration || vehicle.topSpeed);
   const hasSafety = !!(vehicle.safetyFeatures && vehicle.safetyFeatures.length > 0);
   const hasOtherAttrs = !!(vehicle.otherAttributes && vehicle.otherAttributes.length > 0);
   const hasSources = !!(vehicle.dataSources && vehicle.dataSources.length > 0);
@@ -112,7 +107,7 @@ export default function VehicleDetailsScreen() {
         }}
       >
         <Pressable
-          onPress={() => router.back()}
+          onPress={() => router.canGoBack() ? router.back() : router.replace('/explore')}
           hitSlop={8}
           style={{
             width: 40,
@@ -136,16 +131,23 @@ export default function VehicleDetailsScreen() {
         <Pressable
           onPress={() => {
             if (inComparison) {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
               removeVehicle(id ?? '');
             } else if (!comparisonFull) {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
               addVehicle(id ?? '');
               if (selectedIds.length + 1 >= 2) {
                 notifyComparisonReady(selectedIds.length + 1);
               }
+            } else {
+              Alert.alert('Comparação completa', 'Você já selecionou 3 veículos. Abra a comparação para trocar ou remover um deles.', [
+                { text: 'Cancelar', style: 'cancel' },
+                { text: 'Abrir comparação', onPress: () => router.push('/comparison') },
+              ]);
             }
           }}
+          accessibilityRole="button"
+          accessibilityLabel={inComparison ? 'Remover da comparação' : 'Adicionar à comparação'}
           hitSlop={8}
           style={({ pressed }) => ({ opacity: pressed ? 0.6 : comparisonFull ? 0.35 : 1 })}
         >
@@ -170,7 +172,7 @@ export default function VehicleDetailsScreen() {
         <Pressable
           onPress={() => {
             const adding = !favorited;
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
             toggleFavorite(id ?? '');
             if (adding) {
               notifyFavoriteAdded(`${vehicle.brand} ${vehicle.model}`);
@@ -270,13 +272,16 @@ export default function VehicleDetailsScreen() {
           </Text>
 
           {/* Preço */}
-          <Text style={{ fontSize: 22, fontWeight: '700', color: colors.primary, letterSpacing: 0.2 }}>
-            {formatPrice(vehicle.price)}
+          <VehiclePriceSummary vehicle={vehicle} detail />
+          <Text className="text-sm text-subtle-dark">
+            {vehicle.confidenceStatus === 'verificado'
+              ? 'Confira as fontes e a referência dos dados ao final da ficha.'
+              : 'Esta ficha ainda não foi integralmente validada. Veja o alcance da revisão e as fontes ao final.'}
           </Text>
         </View>
 
         {/* ── Preço FIPE ── */}
-        <FipePriceSection brand={vehicle.brand} model={vehicle.model} year={vehicle.year} />
+        <FipePriceSection id={vehicle.id} brand={vehicle.brand} model={vehicle.model} version={vehicle.version} year={vehicle.year} />
 
         {/* ── Summary Pills (scroll horizontal) ── */}
         <ScrollView
@@ -364,7 +369,7 @@ export default function VehicleDetailsScreen() {
             <SpecRow label="Câmbio" value={vehicle.transmission} />
             <SpecRow
               label="Tração"
-              value={vehicle.traction ?? 'Não disponível'}
+              value={vehicle.traction}
               isLast
             />
           </CollapsibleSection>
@@ -375,18 +380,14 @@ export default function VehicleDetailsScreen() {
               title="Desempenho"
               icon={<Fuel size={18} color={colors.primary} strokeWidth={1.5} />}
             >
-              {vehicle.urbanConsumption && (
-                <SpecRow label="Consumo urbano" value={vehicle.urbanConsumption} />
-              )}
-              {vehicle.highwayConsumption && (
-                <SpecRow label="Consumo rodoviário" value={vehicle.highwayConsumption} />
-              )}
+              <SpecRow label="Consumo urbano" value={vehicle.urbanConsumption} />
+              <SpecRow label="Consumo rodoviário" value={vehicle.highwayConsumption} />
               {vehicle.acceleration && (
                 <SpecRow label="0–100 km/h" value={vehicle.acceleration} />
               )}
               <SpecRow
                 label="Vel. máxima"
-                value={vehicle.topSpeed ?? 'Não disponível'}
+                value={vehicle.topSpeed}
                 isLast
               />
             </CollapsibleSection>
@@ -415,12 +416,12 @@ export default function VehicleDetailsScreen() {
                 value={`${vehicle.dimensions!.entre_eixos.toLocaleString('pt-BR')} mm`}
               />
               <SpecRow
-                label="Porta-malas"
-                value={`${vehicle.dimensions!.portaMalas} L`}
+                label="Porta-malas / caçamba"
+                value={vehicle.dimensions?.portaMalas !== undefined ? `${vehicle.dimensions.portaMalas} L` : undefined}
               />
               <SpecRow
                 label="Peso"
-                value={vehicle.weight ? `${vehicle.weight.toLocaleString('pt-BR')} kg` : 'Não disponível'}
+                value={vehicle.weight ? `${vehicle.weight.toLocaleString('pt-BR')} kg` : undefined}
                 isLast
               />
             </CollapsibleSection>
@@ -462,6 +463,12 @@ export default function VehicleDetailsScreen() {
         </View>
 
         {/* ── Fontes de dados ── */}
+        {!!vehicle.dataNotes?.length && (
+          <View className="mx-6 mb-5 rounded-xl bg-background p-4 gap-3">
+            <Text className="text-base font-semibold text-normal">Observações sobre os dados</Text>
+            {vehicle.dataNotes.map(note => <Text key={note} className="text-sm text-subtle-dark">{note}</Text>)}
+          </View>
+        )}
         {hasSources && (
           <View style={{ paddingHorizontal: 24, paddingBottom: 48 }}>
             <View style={{ height: 1, backgroundColor: colors.background, marginBottom: 20 }} />
@@ -475,9 +482,16 @@ export default function VehicleDetailsScreen() {
             <View style={{ gap: 10 }}>
               {vehicle.dataSources!.map(source => (
                 <View key={source} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <CheckCircle2 size={14} color={colors.primary} strokeWidth={1.5} />
-                  <Text style={{ fontSize: 13, color: colors.subtleDark }}>{source}</Text>
+                  <Info size={14} color={colors.primary} strokeWidth={1.5} />
+                  <Text style={{ fontSize: 13, color: colors.subtleDark, flex: 1 }}>{source}</Text>
                 </View>
+              ))}
+              {vehicle.sourceLinks?.map(source => (
+                <Pressable key={source.url} accessibilityRole="link" onPress={() => {
+                  Linking.openURL(source.url).catch(() => Alert.alert('Não foi possível abrir a fonte', 'Confira sua conexão e tente novamente.'));
+                }} style={{ paddingVertical: 8 }}>
+                  <Text className="text-sm text-primary">{source.title} ↗</Text>
+                </Pressable>
               ))}
             </View>
 
@@ -494,7 +508,7 @@ export default function VehicleDetailsScreen() {
             >
               <Info size={14} color={colors.muted} strokeWidth={1.5} style={{ marginTop: 1 }} />
               <Text style={{ fontSize: 12, color: colors.muted, flex: 1, lineHeight: 18 }}>
-                Dados obtidos de fontes públicas e fabricantes. Verifique as especificações oficiais antes de tomar decisões de compra.
+                As referências sustentam somente os campos descritos nas observações. Dados ausentes não significam ausência do equipamento.
               </Text>
             </View>
           </View>

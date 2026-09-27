@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { colors } from '@/src/styles/tokens';
 import { VehicleCard } from './VehicleCard';
 import type { VehicleMock } from '@/src/data/vehicles.mock';
+import { ALL_VEHICLES } from '@/src/data/vehicles.mock';
 
 interface VehicleSectionProps {
   title: string;
@@ -11,18 +12,13 @@ interface VehicleSectionProps {
   onSeeAll?: () => void;
 }
 
-function ViewMoreCard() {
+function ViewMoreCard({ onPress }: { onPress: () => void }) {
   return (
-    <View
-      style={{
-        width: 170,
-        height: 128,
-        borderRadius: 12,
-        backgroundColor: '#F9F9F9',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 8,
-      }}
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`Ver todos os ${ALL_VEHICLES.length} veículos do catálogo`}
+      className="w-[170px] h-[128px] rounded-xl bg-background items-center justify-center gap-2 active:opacity-70"
     >
       <View
         style={{
@@ -38,15 +34,19 @@ function ViewMoreCard() {
           Ver todos
         </Text>
         <Text style={{ fontSize: 10, color: colors.subtleDark, letterSpacing: 0.2 }}>
-          60+ veículos
+          {ALL_VEHICLES.length} veículos
         </Text>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
 export function VehicleSection({ title, vehicles, onSeeAll }: VehicleSectionProps) {
   const router = useRouter();
+  const handleSeeAll = onSeeAll ?? (() => router.push({
+    pathname: '/result',
+    params: { catalogo: 'todos' },
+  }));
 
   function handleCardPress(id: string) {
     router.push(`/vehicle/${id}` as never);
@@ -63,7 +63,9 @@ export function VehicleSection({ title, vehicles, onSeeAll }: VehicleSectionProp
           {title}
         </Text>
         <Pressable
-          onPress={onSeeAll}
+          onPress={handleSeeAll}
+          accessibilityRole="button"
+          accessibilityLabel="Ver todos os veículos do catálogo"
           hitSlop={8}
           style={{
             width: 32, height: 32, borderRadius: 999,
@@ -82,7 +84,7 @@ export function VehicleSection({ title, vehicles, onSeeAll }: VehicleSectionProp
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ paddingLeft: 24, gap: 16 }}
-        ListFooterComponent={<ViewMoreCard />}
+        ListFooterComponent={<ViewMoreCard onPress={handleSeeAll} />}
         ListFooterComponentStyle={{ marginLeft: 16 }}
         renderItem={({ item }) => (
           <VehicleCard

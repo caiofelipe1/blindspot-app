@@ -1,524 +1,127 @@
-import { useState, type ReactNode } from 'react';
-import { ScrollView, View, Text, Image, Pressable, Share } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Alert, Pressable, ScrollView, Share, Text, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import {
-  ArrowLeft, Share2, Trophy, ChevronDown, ChevronUp,
-  ChevronsUp, ChevronsDown, Zap, Settings2, Fuel, Ruler, Tag, Star,
-} from 'lucide-react-native';
-
-import { colors } from '@/src/styles/tokens';
+import { ArrowLeft, Plus, Scale, Share2 } from 'lucide-react-native';
 import { BottomNav } from '@/src/components/layout/BottomNav';
-import { useComparisonStore } from '@/src/stores/comparisonStore';
-import { ALL_VEHICLES } from '@/src/data/vehicles.mock';
-import type { VehicleMock } from '@/src/data/vehicles.mock';
+import { ComparisonPicker } from '@/src/components/vehicle/ComparisonPicker';
+import { ComparisonTable } from '@/src/components/vehicle/ComparisonTable';
+import { ComparisonAttributes } from '@/src/components/vehicle/ComparisonAttributes';
+import { ALL_VEHICLES, type VehicleMock } from '@/src/data/vehicles.mock';
+import { MAX_COMPARISON_VEHICLES, useComparisonStore } from '@/src/stores/comparisonStore';
+import { colors } from '@/src/styles/tokens';
+import { useFipeStore } from '@/src/stores/fipeStore';
+import { attributeKey, buildComparisonSections, buildComparisonShare, selectComparisonAttributes } from '@/src/utils/comparison';
 
-// ─── helpers ────────────────────────────────────────────────────────────────
-
-function formatPrice(value: number): string {
-  return value.toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-    maximumFractionDigits: 0,
-  });
-}
-
-type WinDir = 'higher' | 'lower' | 'none';
-type WinResult = 'left' | 'right' | 'tie' | 'none';
-
-function parseNum(str: string | undefined): number | null {
-  if (!str || str === 'Não disponível') return null;
-  const clean = str.replace(',', '.');
-  const m = clean.match(/[\d.]+/);
-  if (!m) return null;
-  const n = parseFloat(m[0]);
-  return isNaN(n) ? null : n;
-}
-
-function calcWinner(
-  lVal: string,
-  rVal: string,
-  dir: WinDir,
-  lNum?: number,
-  rNum?: number,
-): WinResult {
-  if (dir === 'none') return 'none';
-  const l = lNum ?? parseNum(lVal);
-  const r = rNum ?? parseNum(rVal);
-  if (l === null || r === null) return 'none';
-  if (l === r) return 'tie';
-  if (dir === 'higher') return l > r ? 'left' : 'right';
-  return l < r ? 'left' : 'right';
-}
-
-// ─── data model ─────────────────────────────────────────────────────────────
-
-interface SpecRow {
-  label: string;
-  leftVal: string;
-  rightVal: string;
-  win: WinResult;
-}
-
-interface Section {
-  id: string;
-  title: string;
-  rows: SpecRow[];
-}
-
-function buildSections(lv: VehicleMock, rv: VehicleMock): Section[] {
-  function row(
-    label: string,
-    getDisp: (v: VehicleMock) => string | undefined,
-    dir: WinDir,
-    getNum?: (v: VehicleMock) => number | undefined,
-  ): SpecRow {
-    const lVal = getDisp(lv) ?? 'Não disponível';
-    const rVal = getDisp(rv) ?? 'Não disponível';
-    return {
-      label,
-      leftVal: lVal,
-      rightVal: rVal,
-      win: calcWinner(lVal, rVal, dir, getNum?.(lv), getNum?.(rv)),
-    };
-  }
-
-  return [
-    {
-      id: 'motor', title: 'Motor', rows: [
-        row('Tipo', v => v.engineType, 'none'),
-        row('Potência', v => v.power, 'higher'),
-        row('Torque', v => v.torque, 'higher'),
-        row('Combustível', v => v.fuel, 'none'),
-      ],
-    },
-    {
-      id: 'transmission', title: 'Transmissão', rows: [
-        row('Câmbio', v => v.transmission, 'none'),
-        row('Tração', v => v.traction, 'none'),
-      ],
-    },
-    {
-      id: 'performance', title: 'Desempenho', rows: [
-        row('Consumo urbano', v => v.urbanConsumption, 'higher'),
-        row('Consumo rodoviário', v => v.highwayConsumption, 'higher'),
-        row('0–100 km/h', v => v.acceleration, 'lower'),
-        row('Vel. máxima', v => v.topSpeed, 'higher'),
-      ],
-    },
-    {
-      id: 'dimensions', title: 'Dimensões', rows: [
-        row('Comprimento', v => v.dimensions ? `${v.dimensions.comprimento.toLocaleString('pt-BR')} mm` : undefined, 'none'),
-        row('Largura', v => v.dimensions ? `${v.dimensions.largura.toLocaleString('pt-BR')} mm` : undefined, 'none'),
-        row('Altura', v => v.dimensions ? `${v.dimensions.altura.toLocaleString('pt-BR')} mm` : undefined, 'none'),
-        row('Entre-eixos', v => v.dimensions ? `${v.dimensions.entre_eixos.toLocaleString('pt-BR')} mm` : undefined, 'none'),
-        row('Porta-malas', v => v.dimensions ? `${v.dimensions.portaMalas} L` : undefined, 'higher',
-          v => v.dimensions?.portaMalas),
-        row('Peso', v => v.weight ? `${v.weight.toLocaleString('pt-BR')} kg` : undefined, 'lower',
-          v => v.weight),
-      ],
-    },
-    {
-      id: 'price', title: 'Preço e Avaliação', rows: [
-        row('Preço aprox.', v => formatPrice(v.price), 'lower', v => v.price),
-        row('Avaliação', v => `${v.rating}`, 'higher', v => v.rating),
-      ],
-    },
-  ];
-}
-
-function computeWins(sections: Section[]): { leftWins: number; rightWins: number } {
-  let l = 0, r = 0;
-  for (const s of sections) {
-    for (const row of s.rows) {
-      if (row.win === 'left') l++;
-      else if (row.win === 'right') r++;
-    }
-  }
-  return { leftWins: l, rightWins: r };
-}
-
-// ─── sub-components ──────────────────────────────────────────────────────────
-
-function getSectionIcon(id: string): ReactNode {
-  const p = { size: 18, color: colors.primary, strokeWidth: 1.5 };
-  switch (id) {
-    case 'motor':        return <Zap {...p} />;
-    case 'transmission': return <Settings2 {...p} />;
-    case 'performance':  return <Fuel {...p} />;
-    case 'dimensions':   return <Ruler {...p} />;
-    default:             return <Tag {...p} />;
-  }
-}
-
-function CompareRow({ label, leftVal, rightVal, win, isLast }: {
-  label: string;
-  leftVal: string;
-  rightVal: string;
-  win: WinResult;
-  isLast?: boolean;
-}) {
-  return (
-    <View
-      style={{
-        backgroundColor: '#F7F8F9',
-        paddingVertical: 14,
-        borderBottomWidth: isLast ? 0 : 1,
-        borderBottomColor: '#ECEDF0',
-      }}
-    >
-      <Text
-        style={{
-          fontSize: 12,
-          color: colors.subtleDark,
-          textAlign: 'center',
-          marginBottom: 8,
-          letterSpacing: 0.2,
-        }}
-      >
-        {label}
-      </Text>
-      <View style={{ flexDirection: 'row' }}>
-        <View style={{ flex: 1, alignItems: 'center', paddingHorizontal: 12 }}>
-          <Text
-            style={{
-              fontSize: 14,
-              fontWeight: win === 'left' ? '700' : '400',
-              color: win === 'left' ? colors.normal : colors.subtleDark,
-              textAlign: 'center',
-            }}
-            numberOfLines={3}
-          >
-            {leftVal}
-          </Text>
-        </View>
-        <View style={{ width: 1, backgroundColor: '#DDDFE3' }} />
-        <View style={{ flex: 1, alignItems: 'center', paddingHorizontal: 12 }}>
-          <Text
-            style={{
-              fontSize: 14,
-              fontWeight: win === 'right' ? '700' : '400',
-              color: win === 'right' ? colors.normal : colors.subtleDark,
-              textAlign: 'center',
-            }}
-            numberOfLines={3}
-          >
-            {rightVal}
-          </Text>
-        </View>
-      </View>
-    </View>
-  );
-}
-
-function CompareSection({ section, expanded, onToggle }: {
-  section: Section;
-  expanded: boolean;
-  onToggle: () => void;
-}) {
-  const icon = getSectionIcon(section.id);
-
-  return (
-    <View style={{ backgroundColor: '#FFFFFF' }}>
-      <Pressable
-        onPress={onToggle}
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingHorizontal: 20,
-          paddingVertical: 16,
-          gap: 12,
-        }}
-      >
-        <View
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: 10,
-            backgroundColor: 'rgba(0,119,200,0.08)',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          {icon}
-        </View>
-        <Text style={{ flex: 1, fontSize: 16, fontWeight: '600', color: colors.normal, letterSpacing: 0.2 }}>
-          {section.title}
-        </Text>
-        {expanded
-          ? <ChevronUp size={20} color={colors.subtleDark} strokeWidth={1.5} />
-          : <ChevronDown size={20} color={colors.subtleDark} strokeWidth={1.5} />
-        }
-      </Pressable>
-
-      {expanded && section.rows.map((r, i) => (
-        <CompareRow
-          key={r.label}
-          label={r.label}
-          leftVal={r.leftVal}
-          rightVal={r.rightVal}
-          win={r.win}
-          isLast={i === section.rows.length - 1}
-        />
-      ))}
-    </View>
-  );
-}
-
-function VehicleHeader({ vehicle, onPress }: { vehicle: VehicleMock; onPress: () => void }) {
-  return (
-    <Pressable style={{ flex: 1 }} onPress={onPress}>
-      <Image
-        source={vehicle.image}
-        style={{ width: '100%', height: 170 }}
-        resizeMode="cover"
-      />
-      <View style={{ padding: 12, gap: 5 }}>
-        <Text
-          style={{ fontSize: 15, fontWeight: '700', color: colors.normal, letterSpacing: 0.2 }}
-          numberOfLines={2}
-        >
-          {vehicle.brand} {vehicle.model}
-        </Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <Star size={12} color="#FE9A00" fill="#FE9A00" />
-          <Text style={{ fontSize: 12, fontWeight: '600', color: colors.normal }}>
-            {vehicle.rating}
-          </Text>
-          <Text style={{ fontSize: 11, color: colors.subtleDark }}>
-            ({Math.round(vehicle.rating * 26)} avaliações)
-          </Text>
-        </View>
-        <Text style={{ fontSize: 14, fontWeight: '700', color: colors.normal }}>
-          {formatPrice(vehicle.price)}
-        </Text>
-      </View>
-    </Pressable>
-  );
-}
-
-// ─── screen ──────────────────────────────────────────────────────────────────
-
-const ALL_SECTION_IDS = ['motor', 'transmission', 'performance', 'dimensions', 'price'];
+type PickerTarget = { kind: 'add' } | { kind: 'replace'; id: string } | null;
+const SECTION_IDS = ['motor', 'transmission', 'performance', 'dimensions', 'price', 'safety', 'attributes', 'custom'];
+const AVAILABLE_ATTRIBUTES = buildComparisonSections(ALL_VEHICLES);
+const AVAILABLE_KEYS = new Set(AVAILABLE_ATTRIBUTES.flatMap(section => section.rows.map(row => attributeKey(row.label))));
 
 export default function ComparisonScreen() {
   const router = useRouter();
-  const { selectedIds } = useComparisonStore();
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(ALL_SECTION_IDS)
-  );
-
-  const vehicles = selectedIds
-    .map(id => ALL_VEHICLES.find(v => v.id === id))
-    .filter((v): v is VehicleMock => !!v);
-
-  if (vehicles.length < 2) {
-    return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }} edges={['top']}>
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 20, paddingHorizontal: 32 }}>
-          <Text style={{ fontSize: 18, fontWeight: '600', color: colors.normal, textAlign: 'center' }}>
-            Selecione pelo menos 2 veículos para comparar
-          </Text>
-          <Pressable
-            onPress={() => router.back()}
-            style={{
-              borderWidth: 1,
-              borderColor: colors.subtleLight,
-              borderRadius: 12,
-              paddingHorizontal: 24,
-              paddingVertical: 12,
-            }}
-          >
-            <Text style={{ fontSize: 14, fontWeight: '500', color: colors.normal }}>Voltar</Text>
-          </Pressable>
-        </View>
-        <BottomNav />
-      </SafeAreaView>
-    );
-  }
-
-  const [leftV, rightV] = vehicles;
-  const sections = buildSections(leftV, rightV);
-  const { leftWins, rightWins } = computeWins(sections);
-  const allExpanded = expandedSections.size === sections.length;
+  const { quotes, hydrated, hydrationError, hydrate } = useFipeStore();
+  useEffect(() => { void hydrate(); }, [hydrate]);
+  const { width, fontScale } = useWindowDimensions();
+  const { selectedIds, selectedAttributes: savedAttributes, setAttributes, addVehicle, removeVehicle, replaceVehicle, clearAll } = useComparisonStore();
+  const knownAttributes = savedAttributes?.filter(label => AVAILABLE_KEYS.has(attributeKey(label)));
+  const selectedAttributes = knownAttributes?.length ? knownAttributes : null;
+  const [attributesOpen, setAttributesOpen] = useState(false);
+  const [picker, setPicker] = useState<PickerTarget>(null);
+  const [expanded, setExpanded] = useState(new Set(SECTION_IDS));
+  const vehicles = selectedIds.map(id => ALL_VEHICLES.find(v => v.id === id)).filter((v): v is VehicleMock => !!v);
+  const sections = vehicles.length >= 2 ? selectComparisonAttributes(vehicles, selectedAttributes, quotes) : [];
+  const columnWidth = Math.max(172 * fontScale, width / Math.max(vehicles.length, 2));
+  const needsScroll = columnWidth * vehicles.length > width + 1;
+  const allExpanded = sections.every(section => expanded.has(section.id));
 
   function toggleSection(id: string) {
-    setExpandedSections(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+    setExpanded(previous => {
+      const next = new Set(previous);
+      if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
   }
 
-  function toggleAll() {
-    setExpandedSections(
-      allExpanded ? new Set() : new Set(ALL_SECTION_IDS)
-    );
+  async function shareComparison() {
+    try {
+      await Share.share({ title: 'Comparação BlindSpot', message: buildComparisonShare(vehicles, sections) });
+    } catch {
+      Alert.alert('Não foi possível compartilhar', 'Tente novamente. Sua comparação continua disponível.');
+    }
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }} edges={['top']}>
-      {/* ── Header ── */}
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingHorizontal: 20,
-          paddingTop: 10,
-          paddingBottom: 10,
-        }}
-      >
-        <Pressable
-          onPress={() => router.back()}
-          hitSlop={8}
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 20,
-            backgroundColor: colors.background,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <ArrowLeft size={20} color={colors.normal} strokeWidth={1.5} />
+    <SafeAreaView className="flex-1 bg-white" edges={['top']}>
+      <View className="flex-row items-center gap-3 px-5 py-3">
+        <Pressable onPress={() => router.canGoBack() ? router.back() : router.replace('/explore')} accessibilityRole="button" accessibilityLabel="Voltar" className="p-3 rounded-full bg-background">
+          <ArrowLeft size={20} color={colors.normal} />
         </Pressable>
-
-        <View style={{ flex: 1 }} />
-
-        <Pressable
-          hitSlop={8}
-          onPress={() =>
-            Share.share({
-              title: `Comparação: ${leftV.brand} ${leftV.model} vs ${rightV.brand} ${rightV.model}`,
-              message: `Comparei no BlindSpot:\n\n🚗 ${leftV.brand} ${leftV.model} ${leftV.year} — R$ ${leftV.price.toLocaleString('pt-BR')}\n🚗 ${rightV.brand} ${rightV.model} ${rightV.year} — R$ ${rightV.price.toLocaleString('pt-BR')}\n\nVencedor: ${leftWins > rightWins ? leftV.model : rightWins > leftWins ? rightV.model : 'Empate'} (${Math.max(leftWins, rightWins)} specs ganhas)`,
-            })
-          }
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 20,
-            backgroundColor: colors.background,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Share2 size={20} color={colors.normal} strokeWidth={1.5} />
-        </Pressable>
-      </View>
-
-      <ScrollView showsVerticalScrollIndicator={false} bounces>
-        {/* ── Vehicle Cards (side-by-side) ── */}
-        <View
-          style={{
-            flexDirection: 'row',
-            borderBottomWidth: 1,
-            borderBottomColor: colors.background,
-          }}
-        >
-          <VehicleHeader
-            vehicle={leftV}
-            onPress={() => router.push(`/vehicle/${leftV.id}` as never)}
-          />
-          <View style={{ width: 1, backgroundColor: colors.background }} />
-          <VehicleHeader
-            vehicle={rightV}
-            onPress={() => router.push(`/vehicle/${rightV.id}` as never)}
-          />
+        <View className="flex-1">
+          <Text className="text-xl font-semibold text-normal">Comparar</Text>
+          <Text className="text-xs text-subtle-dark">{vehicles.length} de {MAX_COMPARISON_VEHICLES} veículos</Text>
         </View>
-
-        {/* ── Winner Stats ── */}
-        <View
-          style={{
-            flexDirection: 'row',
-            borderBottomWidth: 1,
-            borderBottomColor: colors.background,
-          }}
-        >
-          {/* Left winner */}
-          <View
-            style={{
-              flex: 1,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 10,
-              paddingHorizontal: 16,
-              paddingVertical: 14,
-            }}
-          >
-            <Trophy size={22} color="#F59E0B" strokeWidth={1.5} />
-            <View>
-              <Text style={{ fontSize: 12, color: colors.subtleDark, marginBottom: 2 }}>
-                {leftV.model} vence
-              </Text>
-              <Text style={{ fontSize: 18, fontWeight: '700', color: colors.normal }}>
-                {leftWins} Specs
-              </Text>
-            </View>
-          </View>
-
-          <View style={{ width: 1, backgroundColor: colors.background }} />
-
-          {/* Right winner */}
-          <View
-            style={{
-              flex: 1,
-              paddingHorizontal: 16,
-              paddingVertical: 14,
-              justifyContent: 'center',
-            }}
-          >
-            <Text style={{ fontSize: 12, color: colors.subtleDark, marginBottom: 2 }}>
-              {rightV.model} vence
-            </Text>
-            <Text style={{ fontSize: 18, fontWeight: '700', color: colors.normal }}>
-              {rightWins} Specs
-            </Text>
-          </View>
-        </View>
-
-        {/* ── Collapse / Expand all ── */}
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'flex-end',
-            paddingHorizontal: 20,
-            paddingVertical: 12,
-            borderBottomWidth: 1,
-            borderBottomColor: colors.background,
-          }}
-        >
-          <Pressable
-            onPress={toggleAll}
-            hitSlop={8}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
-          >
-            {allExpanded
-              ? <ChevronsUp size={16} color={colors.primary} strokeWidth={1.5} />
-              : <ChevronsDown size={16} color={colors.primary} strokeWidth={1.5} />
-            }
-            <Text style={{ fontSize: 14, fontWeight: '500', color: colors.primary }}>
-              {allExpanded ? 'Colapsar tudo' : 'Expandir tudo'}
-            </Text>
+        {vehicles.length >= 2 && (
+          <Pressable onPress={shareComparison} disabled={!hydrated} accessibilityRole="button" accessibilityLabel="Compartilhar comparação" className="p-3 rounded-full bg-background">
+            <Share2 size={20} color={colors.normal} />
           </Pressable>
+        )}
+      </View>
+      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 24 }}>
+        <View className="px-5 py-3 gap-3">
+          {!hydrated && <Text className="text-xs text-subtle-dark">{hydrationError ?? 'Carregando consultas salvas…'}</Text>}
+          {hydrationError && <Pressable onPress={() => void hydrate()} accessibilityRole="button" className="py-2"><Text className="text-sm text-primary">Tentar novamente</Text></Pressable>}
+          {vehicles.length < 2 && (
+            <View className="rounded-2xl bg-background p-5 gap-3">
+              <Scale size={28} color={colors.primary} />
+              <Text className="text-lg font-semibold text-normal">{vehicles.length === 0 ? 'Quais veículos você quer comparar?' : 'Adicione mais um veículo'}</Text>
+              <Text className="text-sm text-subtle-dark">Escolha de 2 a 3 veículos do catálogo para consultar as especificações lado a lado.</Text>
+            </View>
+          )}
+          <View className="flex-row flex-wrap items-center gap-3">
+            {vehicles.length < MAX_COMPARISON_VEHICLES && (
+              <Pressable onPress={() => setPicker({ kind: 'add' })} accessibilityRole="button" className="flex-row items-center gap-2 rounded-xl bg-primary px-4 py-3">
+                <Plus size={18} color={colors.white} />
+                <Text className="text-sm font-semibold text-white">Adicionar veículo</Text>
+              </Pressable>
+            )}
+            {vehicles.length > 0 && (
+              <Pressable onPress={clearAll} accessibilityRole="button" className="px-3 py-3">
+                <Text className="text-sm text-subtle-dark">Limpar seleção</Text>
+              </Pressable>
+            )}
+          </View>
+          <Pressable onPress={() => setAttributesOpen(true)} accessibilityRole="button" className="rounded-xl border border-primary px-4 py-3 self-start">
+            <Text className="text-sm font-semibold text-primary">Escolher atributos{selectedAttributes ? ` (${selectedAttributes.length})` : ''}</Text>
+          </Pressable>
+          {vehicles.length >= 2 && (
+            <>
+                <Text className="text-xs text-subtle-dark">Compare as especificações disponíveis. O preço FIPE corresponde à versão e ao mês da consulta salva.</Text>
+              <Pressable onPress={() => setExpanded(allExpanded ? new Set() : new Set(SECTION_IDS))} accessibilityRole="button" className="py-2 self-start">
+                <Text className="font-semibold text-sm text-primary">{allExpanded ? 'Recolher tudo' : 'Expandir tudo'}</Text>
+              </Pressable>
+            </>
+          )}
+          {needsScroll && <Text className="text-sm text-primary">Deslize a tabela para o lado para ver todos os veículos →</Text>}
         </View>
-
-        {/* ── Spec Sections ── */}
-        <View style={{ gap: 1, backgroundColor: colors.background }}>
-          {sections.map(section => (
-            <CompareSection
-              key={section.id}
-              section={section}
-              expanded={expandedSections.has(section.id)}
-              onToggle={() => toggleSection(section.id)}
-            />
-          ))}
-        </View>
-
-        <View style={{ height: 16 }} />
+        {vehicles.length > 0 && (
+          <ScrollView horizontal nestedScrollEnabled key={vehicles.map(v => v.id).join(',')}>
+            <ComparisonTable vehicles={vehicles} sections={sections} expanded={expanded} columnWidth={columnWidth}
+              onToggle={toggleSection} onOpen={id => router.push(`/vehicle/${id}`)}
+              onReplace={id => setPicker({ kind: 'replace', id })} onRemove={removeVehicle} />
+          </ScrollView>
+        )}
       </ScrollView>
-
       <BottomNav />
+      {attributesOpen && <ComparisonAttributes available={AVAILABLE_ATTRIBUTES} selected={selectedAttributes} onClose={() => setAttributesOpen(false)}
+        onApply={labels => { setAttributes(labels); setExpanded(new Set(SECTION_IDS)); setAttributesOpen(false); }} />}
+      {picker && (
+        <ComparisonPicker selectedIds={selectedIds} replacing={picker.kind === 'replace'} onClose={() => setPicker(null)}
+          onSelect={id => {
+            if (picker.kind === 'replace') replaceVehicle(picker.id, id); else addVehicle(id);
+            setPicker(null);
+          }} />
+      )}
     </SafeAreaView>
   );
 }

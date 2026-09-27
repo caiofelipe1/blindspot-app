@@ -17,6 +17,8 @@ import { Button } from '@/src/components/ui/Button';
 import { Input } from '@/src/components/ui/Input';
 import { colors } from '@/src/styles/tokens';
 import { useAuthStore } from '@/src/stores/authStore';
+import { useAuthReady } from '@/src/utils/useAuthReady';
+import { AuthStorageNotice } from '@/src/components/ui/AuthStorageNotice';
 
 const IMG_CAR = require('../assets/images/car-login.png');
 
@@ -29,6 +31,7 @@ function isValidEmail(email: string): boolean {
 export default function LoginScreen() {
   const router     = useRouter();
   const { isLoggedIn, login } = useAuthStore();
+  const authReady = useAuthReady();
   const keyboardVisible = useKeyboardVisible();
 
   const [email,         setEmail]         = useState('');
@@ -43,14 +46,14 @@ export default function LoginScreen() {
 
   // Redireciona se já estiver logado
   useEffect(() => {
-    if (isLoggedIn) {
+    if (authReady && isLoggedIn) {
       router.replace('/explore' as never);
     }
-  }, [isLoggedIn]);
+  }, [authReady, isLoggedIn, router]);
 
   const emailOk  = isValidEmail(email);
   const senhaOk  = senha.length > 0;
-  const canLogin = emailOk && senhaOk && !loading;
+  const canLogin = authReady && emailOk && senhaOk && !loading;
 
   function clearErrors() {
     if (loginError) setLoginError('');
@@ -77,9 +80,10 @@ export default function LoginScreen() {
   }
 
   async function handleLogin() {
+    if (!authReady || loading) return;
     setLoginError('');
 
-    // Validação antes de chamar a API
+    // Validação antes de consultar a conta local
     let hasError = false;
     if (!email.trim()) {
       setEmailError('Email obrigatório.');
@@ -96,19 +100,15 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
-      const result = await login(email, senha);
-      if (result.success) {
-        router.replace('/explore' as never);
-      } else {
+      const result = await login(email, senha, lembrar);
+      if (!result.success) {
         setLoginError(result.error ?? 'Erro ao fazer login.');
       }
+    } catch {
+      setLoginError('Não foi possível entrar. Tente novamente.');
     } finally {
       setLoading(false);
     }
-  }
-
-  function handleForgotPassword() {
-    router.push('/reset-password');
   }
 
   return (
@@ -120,7 +120,7 @@ export default function LoginScreen() {
       >
         {/* ── Header ── */}
         <View className="h-[76px] bg-white border-b border-background flex-row items-end pb-5 px-8">
-          <Pressable onPress={() => router.back()} hitSlop={8}>
+          <Pressable onPress={() => router.canGoBack() ? router.back() : router.replace('/explore')} hitSlop={8}>
             <ChevronLeft size={24} color={colors.normal} strokeWidth={1.5} />
           </Pressable>
         </View>
@@ -151,6 +151,7 @@ export default function LoginScreen() {
               </Text>
 
               {/* Formulário */}
+              <AuthStorageNotice />
               <View className="gap-4">
 
                 {/* Email */}
@@ -191,7 +192,7 @@ export default function LoginScreen() {
                     }
                   />
 
-                  {/* Lembrar de mim + Esqueceu a senha? */}
+                  {/* Lembrar de mim */}
                   <View className="flex-row items-center justify-between pt-1">
                     <Pressable
                       onPress={() => setLembrar(v => !v)}
@@ -212,11 +213,6 @@ export default function LoginScreen() {
                       </Text>
                     </Pressable>
 
-                    <Pressable onPress={handleForgotPassword} hitSlop={8}>
-                      <Text className="text-muted text-xs font-medium tracking-[0.6px]">
-                        Esqueceu a senha?
-                      </Text>
-                    </Pressable>
                   </View>
                 </View>
               </View>

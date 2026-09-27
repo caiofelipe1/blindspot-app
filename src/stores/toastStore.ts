@@ -12,11 +12,13 @@ interface ToastState {
   dismiss: (id: string) => void;
 }
 
+let toastSequence = 0;
+
 export const useToastStore = create<ToastState>((set) => ({
   toasts: [],
 
   show: (title, body) => {
-    const id = Date.now().toString();
+    const id = `${Date.now()}-${++toastSequence}`;
     set((s) => ({ toasts: [...s.toasts, { id, title, body }] }));
     setTimeout(() => {
       set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) }));

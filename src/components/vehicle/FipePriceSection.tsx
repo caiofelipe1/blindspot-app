@@ -1,241 +1,68 @@
-import { useState } from 'react';
-import { View, Text, Pressable, ActivityIndicator } from 'react-native';
-import { TrendingUp, RefreshCw, AlertCircle, CheckCircle2 } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
-
-import { fipeService, type FipeVehiclePrice } from '@/src/services/fipeService';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { SearchSelect } from '@/src/components/ui/SearchSelect';
+import { Button } from '@/src/components/ui/Button';
 import { colors } from '@/src/styles/tokens';
+import { useFipeLookup } from '@/src/utils/useFipeLookup';
+import { fipeConsultedDate } from '@/src/utils/savedFipe';
 
-interface Props {
-  brand: string;
-  model: string;
-  year: number;
+interface Props { id: string; brand: string; model: string; version: string; year: number }
+
+export function FipePriceSection(props: Props) {
+  // Reset selections and invalidate pending requests when navigating to another vehicle.
+  return <FipeLookup key={`${props.id}:${props.brand}:${props.model}:${props.version}:${props.year}`} {...props} />;
 }
 
-type State =
-  | { status: 'idle' }
-  | { status: 'loading'; step: string }
-  | { status: 'success'; data: FipeVehiclePrice }
-  | { status: 'error'; message: string };
-
-function norm(str: string) {
-  return str
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .trim();
-}
-
-export function FipePriceSection({ brand, model, year }: Props) {
-  const [state, setState] = useState<State>({ status: 'idle' });
-
-  async function consult() {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setState({ status: 'loading', step: 'Buscando marcas…' });
-    try {
-      // 1. Find brand
-      const brands = await fipeService.getBrands();
-      const nb = norm(brand);
-      const foundBrand =
-        brands.find(b => norm(b.nome) === nb) ??
-        brands.find(b => norm(b.nome).includes(nb)) ??
-        brands.find(b => nb.includes(norm(b.nome)));
-
-      if (!foundBrand) {
-        setState({ status: 'error', message: `Marca "${brand}" não encontrada na tabela FIPE.` });
-        return;
-      }
-
-      // 2. Find model — whole-word matching para evitar falsos positivos (ex: "polo" em "apolo")
-      setState({ status: 'loading', step: 'Buscando modelos…' });
-      const models = await fipeService.getModels(foundBrand.codigo);
-      const nm = norm(model);
-      const modelWords = nm.split(/[\s-]+/).filter(w => w.length >= 2);
-
-      function wordScore(fipeNome: string): number {
-        const fn = norm(fipeNome);
-        return modelWords.filter(w => new RegExp(`(^|[\\s-])${w}([\\s-]|$)`).test(fn)).length;
-      }
-
-      const exactMatch = models.find(m => norm(m.nome) === nm);
-      const minScore = Math.min(2, modelWords.length);
-      const candidates = exactMatch
-        ? [exactMatch]
-        : models
-            .map(m => ({ m, score: wordScore(m.nome) }))
-            .filter(({ score }) => score >= minScore)
-            .sort((a, b) => b.score - a.score)
-            .slice(0, 5)
-            .map(({ m }) => m);
-
-      if (candidates.length === 0) {
-        setState({ status: 'error', message: `"${model}" não encontrado na tabela FIPE. O modelo pode não estar cadastrado.` });
-        return;
-      }
-
-      // 3. Testa os top candidatos até achar um com o ano correto (±3 anos)
-      let bestMatch: typeof candidates[0] | null = null;
-      let foundYear: Awaited<ReturnType<typeof fipeService.getYears>>[0] | null = null;
-
-      for (const candidate of candidates) {
-        setState({ status: 'loading', step: 'Buscando anos…' });
-        const years = await fipeService.getYears(foundBrand.codigo, candidate.codigo);
-        const match =
-          years.find(y => y.codigo.startsWith(String(year))) ??
-          years.find(y => {
-            const fy = parseInt(y.codigo.split('-')[0], 10);
-            return !isNaN(fy) && Math.abs(fy - year) <= 3;
-          });
-        if (match) { bestMatch = candidate; foundYear = match; break; }
-      }
-
-      if (!bestMatch || !foundYear) {
-        setState({ status: 'error', message: `${model} ${year} não encontrado na tabela FIPE. O modelo pode não estar cadastrado neste ano.` });
-        return;
-      }
-
-      // 4. Fetch price
-      setState({ status: 'loading', step: 'Consultando preço…' });
-      const price = await fipeService.getPrice(foundBrand.codigo, bestMatch.codigo, foundYear.codigo);
-      setState({ status: 'success', data: price });
-    } catch {
-      setState({ status: 'error', message: 'Falha ao conectar com a API FIPE. Verifique sua conexão.' });
-    }
+function FipeLookup(props: Props) {
+  const { brand, model, year } = props;
+  const lookup = useFipeLookup(props);
+  const saved = lookup.saved;
+  if (!lookup.hydrated) return <View className="mx-6 mb-5">
+    {lookup.hydrationError ? <Pressable onPress={() => void lookup.hydrate()} accessibilityRole="button" className="py-3">
+      <Text className="text-sm text-subtle-dark">{lookup.hydrationError}</Text>
+      <Text className="text-sm text-primary">Tentar novamente</Text>
+    </Pressable> : <ActivityIndicator color={colors.primary} accessibilityLabel="Carregando consulta salva" />}
+  </View>;
+  if (!lookup.started && !saved && !lookup.error) {
+    return <View className="mx-6 mb-5"><Button label="Consultar preço FIPE" variant="secondary" onPress={lookup.start} /></View>;
   }
-
-  function retry() {
-    setState({ status: 'idle' });
-  }
-
-  if (state.status === 'idle') {
-    return (
-      <Pressable
-        onPress={consult}
-        style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1, marginHorizontal: 24, marginBottom: 20 })}
-      >
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 8,
-            paddingVertical: 14,
-            borderRadius: 14,
-            borderWidth: 1.5,
-            borderColor: colors.primary,
-            backgroundColor: 'rgba(0,119,200,0.05)',
-          }}
-        >
-          <TrendingUp size={18} color={colors.primary} strokeWidth={1.5} />
-          <Text style={{ fontSize: 15, fontWeight: '600', color: colors.primary }}>
-            Consultar preço FIPE
-          </Text>
-        </View>
-      </Pressable>
-    );
-  }
-
-  if (state.status === 'loading') {
-    return (
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 12,
-          marginHorizontal: 24,
-          marginBottom: 20,
-          paddingVertical: 16,
-          borderRadius: 14,
-          backgroundColor: colors.background,
-        }}
-      >
-        <ActivityIndicator size="small" color={colors.primary} />
-        <Text style={{ fontSize: 14, color: colors.subtleDark }}>{state.step}</Text>
-      </View>
-    );
-  }
-
-  if (state.status === 'error') {
-    return (
-      <View
-        style={{
-          marginHorizontal: 24,
-          marginBottom: 20,
-          borderRadius: 14,
-          backgroundColor: '#FFF1F1',
-          borderWidth: 1,
-          borderColor: '#FCA5A5',
-          padding: 16,
-          gap: 10,
-        }}
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <AlertCircle size={16} color="#DC2626" strokeWidth={1.5} />
-          <Text style={{ fontSize: 13, color: '#DC2626', flex: 1 }}>{state.message}</Text>
-        </View>
-        <Pressable
-          onPress={retry}
-          style={({ pressed }) => ({
-            opacity: pressed ? 0.7 : 1,
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 6,
-            alignSelf: 'flex-start',
-          })}
-        >
-          <RefreshCw size={13} color={colors.subtleDark} strokeWidth={1.5} />
-          <Text style={{ fontSize: 13, fontWeight: '500', color: colors.subtleDark }}>Tentar novamente</Text>
-        </Pressable>
-      </View>
-    );
-  }
-
-  // success
-  const { data } = state;
   return (
-    <View
-      style={{
-        marginHorizontal: 24,
-        marginBottom: 20,
-        borderRadius: 14,
-        backgroundColor: '#EBF4FC',
-        borderWidth: 1,
-        borderColor: 'rgba(0,119,200,0.2)',
-        padding: 16,
-        gap: 12,
-      }}
-    >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <CheckCircle2 size={16} color={colors.primary} strokeWidth={1.5} />
-        <Text style={{ fontSize: 12, fontWeight: '600', color: colors.primary, letterSpacing: 0.5, textTransform: 'uppercase' }}>
-          Tabela FIPE
-        </Text>
-      </View>
-
-      <View style={{ gap: 4 }}>
-        <Text style={{ fontSize: 28, fontWeight: '700', color: colors.normal }}>{data.Valor}</Text>
-        <Text style={{ fontSize: 13, color: colors.subtleDark }}>
-          {data.Marca} {data.Modelo} · {data.AnoModelo}
-        </Text>
-        <Text style={{ fontSize: 12, color: colors.subtleLight }}>
-          Referência: {data.MesReferencia} · {data.Combustivel}
-        </Text>
-      </View>
-
-      <Pressable
-        onPress={retry}
-        style={({ pressed }) => ({
-          opacity: pressed ? 0.7 : 1,
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 6,
-          alignSelf: 'flex-start',
-        })}
-      >
-        <RefreshCw size={12} color={colors.subtleDark} strokeWidth={1.5} />
-        <Text style={{ fontSize: 12, color: colors.subtleDark }}>Atualizar</Text>
-      </Pressable>
+    <View className="mx-6 mb-5 p-4 rounded-2xl bg-background gap-3">
+      <Text className="text-base font-semibold text-primary">Consulta FIPE</Text>
+      {saved && <View className="gap-2">
+        <Text className="text-xs text-subtle-dark">ÚLTIMA CONSULTA SALVA</Text>
+        <Text className="text-2xl font-bold text-normal">{saved.price.Valor}</Text>
+        <Text className="text-sm text-normal">{saved.price.Modelo}</Text>
+        <Text className="text-sm text-subtle-dark">{saved.price.AnoModelo} · {saved.price.Combustivel}</Text>
+        <Text className="text-xs text-subtle-dark">Referência: {saved.price.MesReferencia} · FIPE {saved.price.CodigoFipe}</Text>
+        <Text className="text-xs text-subtle-dark">Consultado em {fipeConsultedDate(saved)} · disponível na comparação</Text>
+        {!lookup.started && <View className="gap-1">
+          <Button size="sm" label="Atualizar preço" variant="secondary" onPress={lookup.refresh} disabled={lookup.loading} />
+          <View className="flex-row flex-wrap justify-between gap-3">
+            <Pressable onPress={lookup.start} disabled={lookup.loading} accessibilityRole="button" className="py-3"><Text className="text-sm text-primary">Alterar versão</Text></Pressable>
+            <Pressable onPress={lookup.remove} disabled={lookup.loading} accessibilityRole="button" className="py-3"><Text className="text-sm text-subtle-dark">Remover consulta</Text></Pressable>
+          </View>
+        </View>}
+      </View>}
+      {lookup.started && <>
+      <Text className="text-sm text-subtle-dark">Confira a versão de {brand} {model} e o combustível para {year}. A seleção confirmada será salva para comparar preços.</Text>
+      {lookup.models.length > 0 && <>
+      <SearchSelect label="Modelo e versão na FIPE" value={String(lookup.model?.codigo ?? '')} options={lookup.models.map(m => ({ value: String(m.codigo), label: m.nome }))}
+        disabled={lookup.loading || !lookup.brand} onChange={value => lookup.selectModel(lookup.models.find(m => String(m.codigo) === value) ?? null)} />
+      <SearchSelect label="Ano e combustível na FIPE" value={lookup.year?.codigo ?? ''} options={lookup.years.map(y => ({ value: y.codigo, label: y.nome }))}
+        disabled={lookup.loading || !lookup.model || lookup.years.length === 0} onChange={value => lookup.selectYear(lookup.years.find(y => y.codigo === value) ?? null)} />
+      </>}
+      </>}
+      {lookup.loading && <View className="flex-row items-center gap-2 py-2"><ActivityIndicator color={colors.primary} /><Text className="text-sm text-subtle-dark">Consultando FIPE…</Text></View>}
+      {lookup.started && !lookup.loading && !lookup.error && lookup.models.length === 0 && <View className="gap-2">
+        <Text accessibilityRole="alert" className="text-sm text-subtle-dark">Não encontramos versões de {brand} {model} para {year} na FIPE. O preço FIPE está indisponível para esta ficha.</Text>
+        <Pressable onPress={lookup.start} accessibilityRole="button" className="py-2"><Text className="font-semibold text-primary">Verificar novamente</Text></Pressable>
+      </View>}
+      {lookup.error && <View className="gap-2">
+        <Text accessibilityRole="alert" className="text-sm text-subtle-dark">{lookup.error.message}</Text>
+        <Pressable onPress={lookup.error.retry} accessibilityRole="button" className="py-3"><Text className="font-semibold text-primary">Tentar novamente</Text></Pressable>
+      </View>}
+      {lookup.started && lookup.models.length > 0 && <Button size="sm" label="Confirmar e salvar consulta" onPress={lookup.consult} disabled={lookup.loading || !lookup.year} />}
+      {lookup.started && <Pressable onPress={lookup.cancel} disabled={lookup.loading} accessibilityRole="button" className="py-2 self-start"><Text className="text-sm text-subtle-dark">Cancelar</Text></Pressable>}
     </View>
   );
 }

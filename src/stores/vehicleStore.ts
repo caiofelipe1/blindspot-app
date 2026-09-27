@@ -14,7 +14,7 @@ export const useVehicleStore = create<VehicleState>((set, get) => ({
   fipeBrandsError: null,
 
   fetchFipeBrands: async () => {
-    if (get().fipeBrands.length > 0) return;
+    if (get().fipeBrands.length > 0 || get().fipeBrandsLoading) return;
     set({ fipeBrandsLoading: true, fipeBrandsError: null });
     try {
       const brands = await fipeService.getBrands();

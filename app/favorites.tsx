@@ -1,3 +1,4 @@
+import { VehiclePriceSummary } from '@/src/components/vehicle/VehiclePriceSummary';
 import { useState } from 'react';
 import { View, Text, Pressable, ScrollView, Image, StyleSheet, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -12,13 +13,7 @@ import { ALL_VEHICLES } from '@/src/data/vehicles.mock';
 import { colors } from '@/src/styles/tokens';
 import type { VehicleMock } from '@/src/data/vehicles.mock';
 
-function formatPrice(value: number): string {
-  return value.toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-    maximumFractionDigits: 0,
-  });
-}
+
 
 interface FavoriteCardProps {
   vehicle: VehicleMock;
@@ -78,9 +73,7 @@ function FavoriteCard({ vehicle, cardWidth, isEditing, onPress, onRemove }: Favo
         >
           {vehicle.brand} {vehicle.model}
         </Text>
-        <Text style={{ fontSize: 14, fontWeight: '500', color: colors.subtleDark, letterSpacing: 0.4 }}>
-          {formatPrice(vehicle.price)}
-        </Text>
+        <VehiclePriceSummary vehicle={vehicle} />
       </View>
     </Pressable>
   );
@@ -145,7 +138,7 @@ function RecentCard({ cardWidth }: { cardWidth: number }) {
 function EmptyState() {
   const router = useRouter();
   return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, paddingHorizontal: 32 }}>
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, paddingHorizontal: 32, paddingVertical: 24 }}>
       <View
         style={{
           width: 72, height: 72, borderRadius: 999,
@@ -181,20 +174,21 @@ function EmptyState() {
 
 export default function FavoritesScreen() {
   const router = useRouter();
-  const { width } = useWindowDimensions();
+  const { width, fontScale } = useWindowDimensions();
   const { favoriteIds, toggleFavorite } = useFavoritesStore();
   const [isEditing, setIsEditing] = useState(false);
 
   const GAP = 20;
   const HORIZONTAL_PADDING = 24;
-  const cardWidth = (width - HORIZONTAL_PADDING * 2 - GAP) / 2;
+  const columns = width < 340 || fontScale > 1.25 ? 1 : 2;
+  const cardWidth = (width - HORIZONTAL_PADDING * 2 - GAP * (columns - 1)) / columns;
 
   const favoriteVehicles = ALL_VEHICLES.filter(v => favoriteIds.includes(v.id));
   const allCards = [{ type: 'recent' as const }, ...favoriteVehicles.map(v => ({ type: 'vehicle' as const, vehicle: v }))];
 
   const rows: typeof allCards[] = [];
-  for (let i = 0; i < allCards.length; i += 2) {
-    rows.push(allCards.slice(i, i + 2));
+  for (let i = 0; i < allCards.length; i += columns) {
+    rows.push(allCards.slice(i, i + columns));
   }
 
   return (
@@ -207,6 +201,8 @@ export default function FavoritesScreen() {
           paddingBottom: 8,
           flexDirection: 'row',
           alignItems: 'flex-end',
+          flexWrap: 'wrap',
+          gap: 8,
           justifyContent: 'space-between',
         }}
       >
@@ -216,7 +212,7 @@ export default function FavoritesScreen() {
         {favoriteVehicles.length > 0 && (
           <Pressable
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
               setIsEditing(e => !e);
             }}
             style={{
@@ -236,7 +232,12 @@ export default function FavoritesScreen() {
       </View>
 
       {favoriteVehicles.length === 0 ? (
-        <EmptyState />
+        <ScrollView className="flex-1" contentContainerStyle={{ flexGrow: 1 }}>
+          <View className="px-6 py-2">
+            <RecentCard cardWidth={cardWidth} />
+          </View>
+          <EmptyState />
+        </ScrollView>
       ) : (
         <ScrollView
           style={{ flex: 1 }}
@@ -261,8 +262,9 @@ export default function FavoritesScreen() {
                     isEditing={isEditing}
                     onPress={() => router.push(`/vehicle/${item.vehicle.id}` as never)}
                     onRemove={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
                       toggleFavorite(item.vehicle.id);
+                      if (favoriteVehicles.length === 1) setIsEditing(false);
                     }}
                   />
                 ),
