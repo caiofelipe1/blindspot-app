@@ -8,9 +8,9 @@ A análise de veículos concorrentes exige reunir informações dispersas e comp
 
 ## Acesso para avaliação
 
-**[Baixar o APK Android na página do EAS](https://expo.dev/accounts/caiofelipe1/projects/blindspot-app/builds/64557db7-bcc2-456b-95d8-6ecf042f4c41)** — versão 1.0.0, build de 27/09/2026.
+**[Baixar o APK Android](https://expo.dev/artifacts/eas/dt4H8-o8h1Y92O4gFzNQbdUtWRXrDipG9ulGU1ctErI.apk)** — versão 1.0.0, build de 27/09/2026.
 
-1. Abra o link no Android e baixe o APK disponibilizado no build.
+1. Abra o link no Android e baixe o arquivo APK. Este instalador não é compatível com iPhone/iOS.
 2. Abra o arquivo e autorize a instalação pelo navegador ou gerenciador de arquivos, caso o Android solicite.
 3. Inicie o **BlindSpot**. Não é necessário instalar Expo Go, iniciar servidor ou criar uma conta para explorar, favoritar e comparar veículos.
 
@@ -69,7 +69,7 @@ O cadastro opcional funciona apenas no aparelho, sem backend, sincronização ou
 
 O perfil `preview` do EAS gera um APK instalável, sem depender do Expo Go ou de um servidor de desenvolvimento.
 
-- [APK atualizado — página de download no EAS](https://expo.dev/accounts/caiofelipe1/projects/blindspot-app/builds/64557db7-bcc2-456b-95d8-6ecf042f4c41) — versão 1.0.0, build de 27/09/2026 com as correções de consulta FIPE e apresentação de preços.
+- [APK atualizado — download direto](https://expo.dev/artifacts/eas/dt4H8-o8h1Y92O4gFzNQbdUtWRXrDipG9ulGU1ctErI.apk) — versão 1.0.0, build de 27/09/2026 com as correções de consulta FIPE e apresentação de preços.
 - Pacote Android: `com.caiofelipe1.blindspot`.
 
 Para gerar novamente, com uma conta Expo autorizada no projeto:
